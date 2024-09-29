@@ -9,3 +9,4 @@ El código MicroPython en `maestro/` sirve para el único microcontrolador maest
 - **Dashboard**: desde un dashboard web, monitorear en tiempo real (mediante el maestro) el estado de los terminales de la red.
 
 ## Descubrimiento de la Red
+
