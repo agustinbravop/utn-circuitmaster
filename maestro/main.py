@@ -55,7 +55,7 @@ def get_terminal_by_name(name):
     return None
 
 
-async def discover_terminals(broadcast_ip, broadcast_port):
+async def discover_terminals(broadcast_ip: str, broadcast_port: int):
     """Enviar un mensaje de broadcast para descubrir a los controladores terminales. Para cada terminal encontrado devuelve su nombre, IP y puerto del servidor TCP."""
     # Crear un socket UDP
     udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -69,7 +69,6 @@ async def discover_terminals(broadcast_ip, broadcast_port):
     # Configurar un temporizador con un timeout para el proceso de descubrimiento
     start_time = time.ticks_ms()
     timeout_ms = 5000
-    found_terminals: list[tuple[Terminal, str, int]] = []
 
     while time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:
         try:
@@ -83,28 +82,33 @@ async def discover_terminals(broadcast_ip, broadcast_port):
                     print("Error: nombre de terminal no conocido")
                     continue
 
-                found_terminals.append((terminal, addr[0], int(port)))
+                # TODO: conectar concurrentemente los varios terminales descubiertos.
+                await terminal.connect_to_terminal(addr[0], int(port))
                 print(f"Encontrado a {terminal_name} en {addr[0]}:{port}")
         except OSError:
-            # Ceder el control si no hay mensajes disponibles
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.1)
 
     udp.close()
-    return found_terminals
 
 
 class Terminal():
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
 
-    async def connect_to_terminal(self, ip, port):
+    def is_connected(self):
+        """Da `True` si el maestro está conectado al server TCP del terminal."""
+        return self.writer is not None
+
+    async def connect_to_terminal(self, ip: str, port: int):
         """Conectar (mediante `asyncio`) al server TCP del terminal."""
         self.reader, self.writer = await asyncio.open_connection(ip, port)
         print(f"Conectado a {self.name} en {ip}:{port}")
+        # Agregarlo al arreglo global de terminales conectados
+        connected_terminals.append(self)
 
     async def get_data(self):
         """Solicitar datos al servidor TCP del terminal (polling)."""
-        if not self.writer:
+        if not self.is_connected():
             # Terminal no conectado, no se puede monitorear
             return
 
@@ -124,15 +128,26 @@ class Terminal():
         """Cerrar la conexión con el server TCP del dispositivo terminal."""
         self.writer.close()
         await self.writer.wait_closed()
+        self.writer = None
+        self.reader = None
+        # Quitarlo del arreglo global de terminales conectados
+        connected_terminals.remove(self)
 
 
-async def poll_terminal_data(terminals: list[Terminal]):
-    """Polling de datos a todos los terminales encontrados."""
+async def poll_terminal_data():
+    """Polling de datos a todos los terminales encontrados y conectados."""
     interval_seconds = 1
     while True:
-        tasks = [terminal.get_data() for terminal in terminals]
+        tasks = [terminal.get_data() for terminal in connected_terminals]
         await asyncio.gather(*tasks)
         await asyncio.sleep(interval_seconds)
+
+# Datos para conectarse a la red WiFi.
+WLAN_SSID = "agus"
+WLAN_PASSWORD = "agustinb"
+
+# Datos para la interacción entre el maestro y los terminales.
+BROADCAST_PORT = 10000
 
 # Terminales a monitorear en la red (un terminal por cada equipo).
 ALL_TERMINALS = [Terminal("TeoríaDelDescontrol"),
@@ -145,12 +160,8 @@ ALL_TERMINALS = [Terminal("TeoríaDelDescontrol"),
                  Terminal("Rompecircuitos"),
                  Terminal("LosFachas")]
 
-# Datos para conectarse a la red WiFi.
-WLAN_SSID = "agus"
-WLAN_PASSWORD = "agustinb"
-
-# Datos para la interacción entre el maestro y los terminales.
-BROADCAST_PORT = 10000
+# Variable global con los terminales actualmente conectados.
+connected_terminals = []
 
 
 async def master_monitoring():
@@ -166,19 +177,9 @@ async def master_monitoring():
     print("Dirección de broadcast:", broadcast_ip)
 
     print("Descubrimiento terminales...")
-    found_terminals = await discover_terminals(broadcast_ip, BROADCAST_PORT)
-    terminals = [t[0] for t in found_terminals]
-    print("Terminales descubiertas:", [t.name for t in terminals])
-
-    # Conectar el maestro a cada terminal de manera concurrente
-    async_tasks = []
-    for terminal, ip, port in found_terminals:
-        async_tasks.append(terminal.connect_to_terminal(ip, port))
-
-    await asyncio.gather(*async_tasks)
-
-    # Monitorear los terminales encontrados
-    await poll_terminal_data(terminals)
-
+    await asyncio.gather(
+        discover_terminals(broadcast_ip, BROADCAST_PORT),
+        poll_terminal_data()
+    )
 
 asyncio.run(master_monitoring())

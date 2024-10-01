@@ -28,17 +28,6 @@ async def connect_to_wifi(ssid, password, max_retries=10):
         return None
 
 
-# def configure_tcp_server_socket(port):
-#     """Configurar socket para un servidor TCP."""
-#     tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     # `SO_REUSEADDR` permite hacer soft reboot del programa sin pisar el socket activo.
-#     # Ref: https://stackoverflow.com/questions/3229860/what-is-the-meaning-of-so-reuseaddr-setsockopt-option-linux
-#     tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-#     tcp.bind(("", port))
-#     tcp.listen()
-#     return tcp
-
-
 async def listen_for_discovery_messages(team_name, port):
     """Esperar broadcast de descubrimiento del maestro."""
     udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -55,9 +44,8 @@ async def listen_for_discovery_messages(team_name, port):
                 response = f"TERMINAL;{team_name};{port}"
                 udp.sendto(response.encode(), addr)
                 print("Respondido con: ", response)
-                return
         except OSError:
-            await asyncio.sleep(0.01)  # Ceder control si no hay mensajes
+            await asyncio.sleep(1)  # Ceder control si no hay mensajes
 
 
 async def start_tcp_server(port):
@@ -76,11 +64,15 @@ async def handle_client(reader, writer):
             data = await reader.read(1024)
             print(f"Mensaje recibido: {data.decode()}")
 
+            if data == b"":
+                # Mensaje de desconexión
+                break
+
             response = "Datos recibidos en el terminal."
             writer.write(response.encode())
             await writer.drain()
         except OSError:
-            await asyncio.sleep(0.1)  # Ceder control si no hay mensajes
+            await asyncio.sleep(0.1)
 
     writer.close()
     await writer.wait_closed()
@@ -101,7 +93,7 @@ sensor_data = {
 }
 
 
-async def monitoring_server():
+async def monitoring():
     if_config = await connect_to_wifi(WLAN_SSID, WLAN_PASSWORD)
     if if_config is None:
         print("Error al conectar a la red Wifi.")
@@ -117,4 +109,4 @@ async def monitoring_server():
     )
 
 
-asyncio.run(monitoring_server())
+asyncio.run(monitoring())
