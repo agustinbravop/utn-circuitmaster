@@ -50,7 +50,7 @@ def bytes_to_ip(ip_bytes: list[int]):
 
 
 async def discover_terminals(broadcast_ip: str, broadcast_port: int):
-    """Enviar un mensaje de broadcast para descubrir a los controladores terminales."""
+    """Enviar periódicamente un mensaje de broadcast para descubrir a los controladores terminales."""
     # Crear un socket UDP
     udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     # Configurar el socket UDP para enviar un broadcast
@@ -58,12 +58,9 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
     # No bloquear la ejecución si no hay mensajes
     udp.setblocking(False)
 
-    # Configurar un temporizador con un timeout para el proceso de descubrimiento
-    start_time = time.ticks_ms()
-    timeout_ms = 8000
+    time_interval_seconds = 5  # Tiempo entre broadcast y broadcast
 
-    print("Descubrimiento terminales...")
-    while time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:
+    while True:
         try:
             udp.sendto(b"DISCOVER", (broadcast_ip, broadcast_port))
 
@@ -74,17 +71,15 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
                 terminal = get_terminal_by_name(terminal_name)
 
                 if terminal is None:
-                    print("Error: nombre de terminal no conocido")
+                    print(f"Error: nombre de terminal {terminal} no conocido")
                     continue
 
                 print(f"Encontrado a {terminal_name} en {addr[0]}:{port}")
                 # TODO: conectar concurrentemente los varios terminales descubiertos.
                 await terminal.connect_to_terminal(addr[0], int(port))
         except OSError:
-            await asyncio.sleep(0.1)
-
-    udp.close()
-    print(f"Terminales descubiertos y conectados: {connected_terminals}")
+            # Ceder el control si no hay mensajes
+            await asyncio.sleep(time_interval_seconds)
 
 
 def get_terminal_by_name(name: str):
@@ -255,15 +250,15 @@ def serve_data():
     return response.encode()
 
 
-# Datos para conectarse a la red WiFi.
+# Datos para conectarse a la red WiFi
 WLAN_SSID = "agus"
 WLAN_PASSWORD = "agustinb"
 
-# Datos para las interfaces del maestro.
+# Datos para las interfaces del maestro
 BROADCAST_PORT = 10000
 HTTP_SERVER_PORT = 80
 
-# Terminales a monitorear en la red (un terminal por cada equipo).
+# Terminales a monitorear en la red (un terminal por cada equipo)
 ALL_TERMINALS = [Terminal("TeoríaDelDescontrol"),
                  Terminal("ClubTA"),
                  Terminal("TeamISI"),
@@ -275,10 +270,10 @@ ALL_TERMINALS = [Terminal("TeoríaDelDescontrol"),
                  Terminal("LosFachas")]
 
 # Variable global con los terminales actualmente conectados.
-# TODO: validar si funciona bien con varios terminales.
+# TODO: validar si funciona bien con varios terminales
 connected_terminals: list[Terminal] = []
 
-# Variable global con los datos recibidos de las terminales.
+# Variable global con los datos recibidos de las terminales
 terminal_data = {}
 
 

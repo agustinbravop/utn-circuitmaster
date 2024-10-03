@@ -101,9 +101,9 @@ sensor_data = {
     "humedad": 50.0,
 }
 
-# Variable global que indica si el terminal está conectado al maestro.
+# Variable global que indica si el terminal está conectado al maestro
 master_disconnected = asyncio.Event()
-master_disconnected.set()  # Inicialmente está desconectado.
+master_disconnected.set()  # Inicialmente está desconectado
 
 
 async def monitoring():
