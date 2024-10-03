@@ -6,7 +6,7 @@ El código MicroPython en `maestro/` sirve para el único microcontrolador maest
 
 - **Descubrimiento de la red**: que el maestro y los terminales se vinculen automáticamente.
 - **Polling**: desde el maestro, monitorear en tiempo real el estado de todos los terminales.
-- **Dashboard**: desde un dashboard web, monitorear en tiempo real (mediante el maestro) el estado de los terminales de la red.
+- **Dashboard**: desde un dashboard web, monitorear en tiempo real el estado de todos los terminales de la red.
 
 Se utiliza la librería `asyncio` para la ejecución concurrente de:
 
@@ -23,14 +23,20 @@ Es necesario que estén conectados a la red local para poder comunicarse con el 
 
 ## Descubrimiento de la Red
 
-El maestro envía periódicamente un mensaje de broadcast UDP en la red local. Si un terminal detecta uno de estos broadcasts, le responde al maestro con un UDP dirigido que incluye el nombre del equipo, la dirección IP, y el puerto, del servidor TCP del terminal. Con esta información, el maestro se conecta (como cliente) al servidor TCP del terminal.
+El maestro envía periódicamente un mensaje de broadcast UDP en la red local. Si un terminal detecta uno de estos broadcasts, le responde al maestro con un UDP dirigido que incluye el nombre del equipo, la dirección IP, y el puerto, del servidor TCP del terminal. Con esta información, el maestro se conecta al servidor TCP del terminal.
+
+![Interacción entre Maestro y Terminal](docs/secuencia-maestro-terminal.png)
 
 Si el maestro se desconecta, el terminal vuelve al "modo descubrimiento" y a esperar mensajes de broadcasts nuevamente.
 
 ## Polling del Maestro a los Terminales
 
-El maestro tiene en todo momento un listado de los terminales que existen y los que están actualmente conectados. La conexión TCP con cada terminal permite periódicamente muestrear los datos (en formato JSON) que cada equipo considera representativo de su terminal. Estos datos son concentrados en una variable global.
+El maestro tiene en todo momento un listado de los terminales que existen y otro con los que están actualmente conectados. La conexión TCP con cada terminal permite periódicamente muestrear los datos (en formato JSON) que cada equipo considera representativo de su terminal. Estos datos de todos los terminales son concentrados en una sola variable global del maestro.
 
 ## Monitoreo Mediante Dashboard Web
 
-El maestro contiene un servidor HTTP/1.1 que ante una petición `GET /` devuelve una página web definida en `/maestro/www`. Esta página web tiene un código JavaScript `/maestro/www/script.js` que cada cierto intervalo de tiempo hace una petición `GET /data` al servidor, actualizando la información que presenta en el navegador. El servidor del maestro devuelve en formato JSON un objeto con los datos más recientes de cada terminal en la red.
+De manera concurrente a la comunicación con los terminales, el maestro también ejecuta un servidor HTTP/1.1 que ante una petición `GET /` devuelve una página web definida en `/maestro/www`. Este dashboard web tiene un código JavaScript en `/maestro/www/script.js` que cada cierto intervalo de tiempo hace una petición `GET /data` al servidor, actualizando la información que luego presenta en el navegador. El servidor del maestro devuelve en formato JSON un objeto con los datos más recientes de cada terminal en la red.
+
+La comunicación entre monitor web, maestro, y terminales, es la siguiente:
+
+![Interacción entre Monitor, Maestro, y Terminal](docs/secuencia-monitor-maestro-terminal.png)
