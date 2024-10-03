@@ -25,7 +25,7 @@ Es necesario que estén conectados a la red local para poder comunicarse con el 
 
 El maestro envía periódicamente un mensaje de broadcast UDP en la red local. Si un terminal detecta uno de estos broadcasts, le responde al maestro con un UDP dirigido que incluye el nombre del equipo, la dirección IP, y el puerto, del servidor TCP del terminal. Con esta información, el maestro se conecta, como cliente, al servidor TCP del terminal.
 
-![Interacción entre Maestro y Terminal](docs/interacción-maestro-terminal.png)
+![Interacción entre Maestro y Terminal](docs/interacción-maestro-terminal.jpg)
 
 Si el maestro se desconecta, el terminal vuelve al "modo descubrimiento" y a esperar mensajes de broadcasts nuevamente.
 
@@ -39,4 +39,4 @@ De manera concurrente a la comunicación con los terminales, el maestro también
 
 La comunicación entre monitor web, maestro, y terminales, es la siguiente:
 
-![Interacción entre Monitor, Maestro, y Terminal](docs/interacción-monitor-maestro-terminal.png)
+![Interacción entre Monitor, Maestro, y Terminal](docs/interacción-monitor-maestro-terminal.jpg)
