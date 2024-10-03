@@ -6,7 +6,7 @@ import ujson as json
 import time
 
 
-async def connect_to_wifi(ssid, password, max_retries=5):
+async def connect_to_wifi(ssid: str, password: str, max_retries=5):
     """Conecta el dispositivo a Wifi. Devuelve la dirección IP y la máscara de subred."""
     # Configurar el WiFi en modo cliente (station)
     wlan = network.WLAN(network.STA_IF)
@@ -52,7 +52,7 @@ async def listen_for_discovery_messages(team_name: str, broadcast_port: int, tcp
         await master_disconnected.wait()
 
 
-async def start_tcp_server(port):
+async def start_tcp_server(port: int):
     """Iniciar un servidor TCP para que el maestro pueda conectarse."""
     server = await asyncio.start_server(handle_client, "0.0.0.0", port)
     await server.wait_closed()

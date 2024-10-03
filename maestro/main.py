@@ -6,7 +6,7 @@ import ubinascii as binascii
 import ujson as json
 
 
-async def connect_to_wifi(ssid, password, max_retries=5):
+async def connect_to_wifi(ssid: str, password: str, max_retries=5):
     """Conecta el dispositivo a Wifi. Devuelve la dirección IP y la máscara de subred."""
     # Configurar el WiFi en modo cliente (station)
     wlan = network.WLAN(network.STA_IF)
@@ -31,16 +31,6 @@ async def connect_to_wifi(ssid, password, max_retries=5):
         return None
 
 
-def ip_to_bytes(ip_string: str):
-    """Convertir una dirección IP en formato string a una lista de bytes."""
-    return [int(octet) for octet in ip_string.split(".")]
-
-
-def bytes_to_ip(ip_bytes: list[int]):
-    """Convertir una lista de bytes a formato string IP."""
-    return ".".join(str(b) for b in ip_bytes)
-
-
 def calculate_broadcast(ip: str, mask: str):
     """Calcular la dirección de broadcast, necesaria para el descubrimiento de red."""
     ip_bytes = ip_to_bytes(ip)
@@ -49,12 +39,14 @@ def calculate_broadcast(ip: str, mask: str):
     return bytes_to_ip(broadcast_bytes)
 
 
-def get_terminal_by_name(name):
-    """Buscar la terminal con el nombre de equipo dado."""
-    for terminal in ALL_TERMINALS:
-        if terminal.name == name:
-            return terminal
-    return None
+def ip_to_bytes(ip_string: str):
+    """Convertir una dirección IP en formato string a una lista de bytes."""
+    return [int(octet) for octet in ip_string.split(".")]
+
+
+def bytes_to_ip(ip_bytes: list[int]):
+    """Convertir una lista de bytes a formato string IP."""
+    return ".".join(str(b) for b in ip_bytes)
 
 
 async def discover_terminals(broadcast_ip: str, broadcast_port: int):
@@ -95,6 +87,23 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
     print(f"Terminales descubiertos y conectados: {connected_terminals}")
 
 
+def get_terminal_by_name(name: str):
+    """Buscar la terminal con el nombre de equipo dado."""
+    for terminal in ALL_TERMINALS:
+        if terminal.name == name:
+            return terminal
+    return None
+
+
+async def poll_terminal_data():
+    """Polling de datos a todos los terminales encontrados y conectados."""
+    interval_seconds = 1
+    while True:
+        tasks = [terminal.get_data() for terminal in connected_terminals]
+        await asyncio.gather(*tasks)
+        await asyncio.sleep(interval_seconds)
+
+
 class Terminal():
     def __init__(self, name: str):
         self.name = name
@@ -111,7 +120,7 @@ class Terminal():
         connected_terminals.append(self)
 
     async def get_data(self):
-        """Solicitar datos al servidor TCP del terminal (polling)."""
+        """Solicitar datos al servidor TCP del terminal y los guarda en la variable global."""
         if not self.is_connected():
             # Terminal no conectado, no se puede monitorear
             return
@@ -124,31 +133,33 @@ class Terminal():
 
             # Recibir la respuesta del servidor
             data_json = await self.reader.read(8192)
-            terminal_data[self.name] = json.loads(data_json)
+
+            if data_json == b"":
+                # Mensaje de desconexión
+                await self.close_connection()
+                return
+            try:
+                terminal_data[self.name] = json.loads(data_json)
+            except ValueError as e:
+                print(f"JSON inválido con {self.name}: {e}, {data_json}")
         except Exception as e:
             print(f"Error con {self.name}: {e}")
+            await self.close_connection()
 
     async def close_connection(self):
         """Cerrar la conexión con el server TCP del dispositivo terminal."""
-        if self.writer:
+        if self.is_connected():
             self.writer.close()
             await self.writer.wait_closed()
             self.writer = None
             self.reader = None
-            # Quitarlo del arreglo global de terminales conectados
-            connected_terminals.remove(self)
+            # Quitarlo de la lista global de terminales conectados
+            if self in connected_terminals:
+                connected_terminals.remove(self)
+        print(f"Desconectado de {self.name}")
 
 
-async def poll_terminal_data():
-    """Polling de datos a todos los terminales encontrados y conectados."""
-    interval_seconds = 1
-    while True:
-        tasks = [terminal.get_data() for terminal in connected_terminals]
-        await asyncio.gather(*tasks)
-        await asyncio.sleep(interval_seconds)
-
-
-async def run_http_server(ip, port):
+async def run_http_server(ip: str, port: int):
     """Server HTTP para el monitoreo mediante un dashboard web."""
     server = await asyncio.start_server(handle_http_request, ip, port)
     print(f"Servidor HTTP escuchando en {ip}:{port}")
@@ -215,7 +226,7 @@ def request_router(request):
         return "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".encode()
 
 
-def serve_file(path, content_type, connection_type="close"):
+def serve_file(path: str, content_type: str):
     """Responder con los archivos HTML, CSS o JS del servidor."""
     try:
         with open(path, "r") as file:
