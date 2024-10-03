@@ -1,6 +1,5 @@
 import network
 import socket
-import time
 import uasyncio as asyncio
 import ubinascii as binascii
 import ujson as json
