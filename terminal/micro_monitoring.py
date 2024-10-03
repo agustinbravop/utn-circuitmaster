@@ -103,7 +103,7 @@ sensor_data = {
 
 # Variable global que indica si el terminal está conectado al maestro
 master_disconnected = asyncio.Event()
-master_disconnected.set()  # Inicialmente está desconectado
+master_disconnected.set()  # Inicialmente el maestro está desconectado
 
 
 async def monitoring():
@@ -123,6 +123,3 @@ async def monitoring():
             TEAM_NAME, BROADCAST_PORT, TCP_SERVER_PORT),
         start_tcp_server(TCP_SERVER_PORT)
     )
-
-
-asyncio.run(monitoring())
