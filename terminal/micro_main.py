@@ -67,7 +67,6 @@ async def handle_client(reader, writer):
     while True:
         try:
             data = await reader.read(1024)
-            print(f"Mensaje recibido: {data.decode()}")
 
             if data == b"":
                 # Mensaje de desconexión
@@ -104,7 +103,7 @@ sensor_data = {
 
 # Variable global que indica si el terminal está conectado al maestro.
 master_disconnected = asyncio.Event()
-master_disconnected.set()
+master_disconnected.set()  # Inicialmente está desconectado.
 
 
 async def monitoring():
