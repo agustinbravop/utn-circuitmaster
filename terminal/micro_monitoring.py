@@ -3,7 +3,6 @@ import socket
 import uasyncio as asyncio
 import ubinascii as binascii
 import ujson as json
-import time
 
 
 async def connect_to_wifi(ssid: str, password: str, max_retries=5):
