@@ -52,39 +52,43 @@ async def listen_for_discovery_messages(team_name: str, broadcast_port: int, tcp
         await master_disconnected.wait()
 
 
-async def start_tcp_server(port: int):
+async def start_tcp_server(port: int, get_app_data):
     """Iniciar un servidor TCP para que el maestro pueda conectarse."""
-    server = await asyncio.start_server(handle_client, "0.0.0.0", port)
+    server = await asyncio.start_server(await create_handler(get_app_data), "0.0.0.0", port)
     await server.wait_closed()
 
 
-async def handle_client(reader, writer):
-    """Manejar la conexión del maestro de forma asincrónica."""
-    master_disconnected.clear()
-    addr = writer.get_extra_info("peername")
-    print(f"Conexión establecida con {addr}")
+async def create_handler(get_app_data):
+    """Construye un handler con acceso a la función para obtener datos del terminal."""
 
-    while True:
-        try:
-            data = await reader.read(1024)
+    async def handle_client(reader, writer):
+        """Manejar la conexión del maestro de forma asincrónica."""
+        master_disconnected.clear()
+        addr = writer.get_extra_info("peername")
+        print(f"Conexión establecida con {addr}")
 
-            if data == b"":
-                # Mensaje de desconexión
-                break
+        while True:
+            try:
+                data = await reader.read(1024)
 
-            if data == b"GETDATA":
-                # Enviar la data del terminal
-                sensor_data["tiempo"] = time.ticks_ms()
-                response = json.dumps(sensor_data)
-                writer.write(response.encode())
-                await writer.drain()
+                if data == b"":
+                    # Mensaje de desconexión
+                    break
 
-        except OSError as e:
-            print(f"Error en la conexión: {e}")
+                if data == b"GETDATA":
+                    # Enviar la data del terminal
+                    response = json.dumps(get_app_data())
+                    writer.write(response.encode())
+                    await writer.drain()
 
-    writer.close()
-    await writer.wait_closed()
-    master_disconnected.set()
+            except OSError as e:
+                print(f"Error en la conexión: {e}")
+
+        writer.close()
+        await writer.wait_closed()
+        master_disconnected.set()
+
+    return handle_client
 
 # Datos para conectarse a la red WiFi.
 WLAN_SSID = "agus"
@@ -95,18 +99,14 @@ BROADCAST_PORT = 10000
 TCP_SERVER_PORT = 10001
 TEAM_NAME = "Rompecircuitos"
 
-# Simulando datos de sensor
-sensor_data = {
-    "temperatura": 25.0,
-    "humedad": 50.0,
-}
-
 # Variable global que indica si el terminal está conectado al maestro
 master_disconnected = asyncio.Event()
 master_disconnected.set()  # Inicialmente el maestro está desconectado
 
 
-async def monitoring():
+async def monitoring(get_app_data):
+    """Monitoreo asincrónico con el controlador maestro.
+    `get_app_data` es una función llamada en cada poll. Debe retornar el `dict` a enviar al maestro."""
     print(f"Controlador {TEAM_NAME}")
 
     if_config = await connect_to_wifi(WLAN_SSID, WLAN_PASSWORD)
@@ -121,5 +121,5 @@ async def monitoring():
     await asyncio.gather(
         listen_for_discovery_messages(
             TEAM_NAME, BROADCAST_PORT, TCP_SERVER_PORT),
-        start_tcp_server(TCP_SERVER_PORT)
+        start_tcp_server(TCP_SERVER_PORT, get_app_data)
     )
