@@ -1,5 +1,5 @@
-import uasyncio as asyncio
-import ujson as json
+import asyncio
+import json
 
 
 class Terminal():

@@ -1,20 +1,39 @@
 from terminals import terminal_data
-import uasyncio as asyncio
-import ujson as json
+import asyncio
+import json
+import socketpool
+import wifi
 
 
 async def run_http_server(ip: str, port: int):
     """Server HTTP para el monitoreo mediante un dashboard web."""
-    server = await asyncio.start_server(handle_http_request, ip, port)
+    pool = socketpool.SocketPool(wifi.radio)
+    server_socket = pool.socket(pool.AF_INET, pool.SOCK_STREAM)
+    server_socket.setsockopt(pool.SOL_SOCKET, pool.SO_REUSEADDR, 1)
+    server_socket.bind((ip, port))
+    server_socket.listen(5)
     print(f"Servidor HTTP escuchando en {ip}:{port}")
-    await server.wait_closed()
+
+    while True:
+        try:
+            client_socket, client_address = server_socket.accept()
+            print(f"Conexión aceptada de {client_address}")
+            handle_http_request(client_socket)
+        except OSError as e:
+            print(f"Error aceptando conexión: {e}")
+        await asyncio.wait(0.1)
 
 
-async def handle_http_request(reader, writer):
+async def handle_http_request(client_socket):
     """Atender una petición HTTP."""
     try:
         while True:
-            request = await reader.read(1024)
+            request = bytearray(1024)
+            try:
+                client_socket.recv_into(request)
+            except OSError:
+                # No hay mensajes disponibles
+                pass
 
             if request == b"":
                 # Mensaje de desconexión
@@ -35,17 +54,16 @@ async def handle_http_request(reader, writer):
                 response.replace(
                     b"\r\n\r\n", "\r\nConnection: keep-alive\r\n\r\n".encode(), 1)
 
-            writer.write(response)
-            await writer.drain()
+            client_socket.send(response)
 
             if connection_type != "keep-alive":
                 # Cerrar la conexión si no se especificó 'keep-alive'
                 break
+            await asyncio.wait(0.1)
     except OSError as e:
         print(f"Error en el servidor HTTP: {e}")
     finally:
-        writer.close()
-        await writer.wait_closed()
+        client_socket.close()
 
 
 def request_router(request):
