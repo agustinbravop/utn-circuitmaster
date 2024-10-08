@@ -30,7 +30,7 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
     # No bloquear la ejecución si no hay mensajes
     udp.setblocking(False)
 
-    time_interval_seconds = 5  # Tiempo entre broadcast y broadcast
+    time_interval_seconds = 3  # Tiempo entre broadcast y broadcast
 
     while True:
         try:
@@ -44,6 +44,10 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
 
                 if terminal is None:
                     print(f"Error: nombre de terminal {terminal} no conocido")
+                    continue
+
+                if terminal.is_connected():
+                    # Terminal ya conectada
                     continue
 
                 print(f"Encontrado a {terminal_name} en {addr[0]}:{port}")

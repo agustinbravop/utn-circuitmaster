@@ -5,6 +5,8 @@ import ujson as json
 class Terminal():
     def __init__(self, name: str):
         self.name = name
+        self.writer = None
+        self.reader = None
 
     def is_connected(self):
         """Da `True` si el maestro está conectado al server TCP del terminal."""
@@ -12,10 +14,13 @@ class Terminal():
 
     async def connect_to_terminal(self, ip: str, port: int):
         """Conectar (mediante `asyncio`) al server TCP del terminal."""
-        self.reader, self.writer = await asyncio.open_connection(ip, port)
-        print(f"Conectado a {self.name} en {ip}:{port}")
-        # Agregarlo al arreglo global de terminales conectados
-        connected_terminals.append(self)
+        try:
+            self.reader, self.writer = await asyncio.open_connection(ip, port)
+            print(f"Conectado a {self.name} en {ip}:{port}")
+            # Agregarlo al arreglo global de terminales conectados
+            connected_terminals.append(self)
+        except OSError as e:
+            print(f"Error al conectarse a {self.name}: {e}.")
 
     async def get_data(self):
         """Solicitar datos al servidor TCP del terminal y los guarda en la variable global."""
