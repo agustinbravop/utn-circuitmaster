@@ -1,4 +1,5 @@
-import uasyncio as asyncio
+import uasyncio as asyncio  # Reemplazar por `asyncio` si utiliza CircuitPython
+# Reemplazar por `circuit_monitoring` si utiliza CircuitPython
 import micro_monitoring
 
 
