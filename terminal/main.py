@@ -13,8 +13,9 @@ def get_app_data():
 
 
 async def main():
+    # Funcionamiento del equipo y monitoreo con el maestro se ejecutan concurrentemente.
     await asyncio.gather(
-        operations(),                               # Proceso específico a cada grupo
+        operations(),
         micro_monitoring.monitoring(get_app_data)   # Monitoreo del maestro
     )
 
