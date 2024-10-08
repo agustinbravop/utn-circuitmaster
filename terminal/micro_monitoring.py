@@ -1,8 +1,10 @@
-import network
+# import network
 import socket
-import uasyncio as asyncio
-import ubinascii as binascii
-import ujson as json
+import asyncio
+import binascii
+import json
+import sys
+import netifaces as ni
 
 
 async def connect_to_wifi(ssid: str, password: str, max_retries=5):
@@ -21,7 +23,7 @@ async def connect_to_wifi(ssid: str, password: str, max_retries=5):
         print(".", end="")
         wlan.connect(ssid, password)
         retries += 1
-        await asyncio.sleep(2)  # Esperar antes del próximo intento
+        await asyncio.sleep(1)  # Esperar antes del próximo intento
 
     print()
     if wlan.isconnected():
@@ -33,6 +35,8 @@ async def connect_to_wifi(ssid: str, password: str, max_retries=5):
 async def listen_for_discovery_messages(team_name: str, broadcast_port: int, tcp_port: int):
     """Esperar broadcast de descubrimiento del maestro."""
     udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Habilitar la opción SO_REUSEADDR para permitir reuso del puerto
+    udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     # Escuchar en todas las interfaces de red
     udp.bind(("0.0.0.0", broadcast_port))
     # No bloquear la ejecución si no hay mensajes
@@ -45,6 +49,11 @@ async def listen_for_discovery_messages(team_name: str, broadcast_port: int, tcp
                 print("Mensaje de descubrimiento recibido de:", addr)
                 response = f"TERMINAL;{team_name};{tcp_port}"
                 udp.sendto(response.encode(), addr)
+
+                # Reenviar mensaje
+                await asyncio.sleep(1)
+                udp.sendto(response.encode(), addr)
+
         except OSError:
             await asyncio.sleep(1)  # Ceder control si no hay mensajes
 
@@ -94,9 +103,10 @@ WLAN_SSID = "agus"
 WLAN_PASSWORD = "agustinb"
 
 # Datos para la interacción entre los terminales y el maestro.
-BROADCAST_PORT = 10000
-TCP_SERVER_PORT = 10001
-TEAM_NAME = "Rompecircuitos"
+BROADCAST_PORT = int(sys.argv[1])
+TCP_SERVER_PORT = int(sys.argv[2])
+TEAM_NAME = sys.argv[3]
+print(sys.argv)
 
 # Variable global que indica si el terminal está conectado al maestro
 master_disconnected = asyncio.Event()
@@ -108,12 +118,17 @@ async def monitoring(get_app_data):
     `get_app_data` es una función llamada en cada poll. Debe retornar el `dict` a enviar al maestro."""
     print(f"Controlador {TEAM_NAME}")
 
-    if_config = await connect_to_wifi(WLAN_SSID, WLAN_PASSWORD)
-    if if_config is None:
-        print("Error al conectar a la red Wifi.")
-        return None
+    # if_config = await connect_to_wifi(WLAN_SSID, WLAN_PASSWORD)
+    # if if_config is None:
+    #     print("Error al conectar a la red Wifi.")
+    #     return None
 
-    terminal_ip, subnet_mask, _, _ = if_config
+    # Obtener interfaz por defecto (puedes cambiar 'eth0' por tu interfaz si usas otra)
+    interfaz = ni.gateways()['default'][ni.AF_INET][1]
+    addr = ni.ifaddresses(interfaz)[ni.AF_INET][0]
+
+    terminal_ip = addr['addr']
+    subnet_mask = addr['netmask']
     print(f"Conectado! IP: {terminal_ip}, Máscara de subred: {subnet_mask}")
 
     print("Esperando mensajes de descubrimiento y conexiones del maestro...")

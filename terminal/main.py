@@ -1,6 +1,7 @@
-import uasyncio as asyncio  # Reemplazar por `asyncio` si utiliza CircuitPython
+import asyncio  # Reemplazar por `asyncio` si utiliza CircuitPython
 # Reemplazar por `circuit_monitoring` si utiliza CircuitPython
 import micro_monitoring
+import time
 
 
 async def operations():
@@ -10,7 +11,7 @@ async def operations():
 
 def get_app_data():
     # Función que devuelve un `dict` con la data para el maestro.
-    return {}
+    return {"tiempo": time.time()}
 
 
 async def main():
