@@ -3,16 +3,18 @@ import micro_monitoring
 
 
 async def operations():
+    # Acá va todo el código específico del equipo.
     pass
 
 
 def get_app_data():
-    pass
+    # Función que devuelve un `dict` con la data para el maestro.
+    return {}
 
 
 async def main():
     await asyncio.gather(
-        operations(),                               # Código específico a cada grupo
+        operations(),                               # Proceso específico a cada grupo
         micro_monitoring.monitoring(get_app_data)   # Monitoreo del maestro
     )
 
