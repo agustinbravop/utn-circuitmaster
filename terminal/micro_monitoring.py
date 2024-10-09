@@ -50,10 +50,6 @@ async def listen_for_discovery_messages(team_name: str, broadcast_port: int, tcp
                 response = f"TERMINAL;{team_name};{tcp_port}"
                 udp.sendto(response.encode(), addr)
 
-                # Reenviar mensaje
-                await asyncio.sleep(1)
-                udp.sendto(response.encode(), addr)
-
         except OSError:
             await asyncio.sleep(1)  # Ceder control si no hay mensajes
 
@@ -72,9 +68,8 @@ async def create_handler(get_app_data):
 
     async def handle_client(reader, writer):
         """Manejar la conexión con el maestro de forma asincrónica."""
+        new_request_recieved.set()
         master_disconnected.clear()
-        addr = writer.get_extra_info("peername")
-        print(f"Petición HTTP recibida de {addr}")
 
         try:
             request = await reader.read(1024)
@@ -89,12 +84,25 @@ async def create_handler(get_app_data):
                 await writer.drain()
         except OSError as e:
             print(f"Error en la conexión: {e}")
+            master_disconnected.set()
         finally:
             writer.close()
             await writer.wait_closed()
-            master_disconnected.set()
 
     return handle_client
+
+
+async def check_master_connection():
+    """Reinicia el descubrimiento del maestro si sucede un timeout en el servidor HTTP."""
+    timeout_seconds = 5
+    while True:
+        # Si `new_request_recieved` no fue seteado por el HTTP handler, desconectar al maestro
+        if not master_disconnected.is_set() and not new_request_recieved.is_set():
+            print("Back to discovery")
+            master_disconnected.set()
+        new_request_recieved.clear()
+        await asyncio.sleep(timeout_seconds)
+
 
 # Datos para conectarse a la red WiFi.
 WLAN_SSID = "agus"
@@ -106,9 +114,12 @@ TCP_SERVER_PORT = int(sys.argv[2])
 TEAM_NAME = sys.argv[3]
 print(sys.argv)
 
-# Variable global que indica si el terminal está conectado al maestro
+# Indica si el maestro está conectado. Si no lo está, se vuelve al descubrimiento
 master_disconnected = asyncio.Event()
 master_disconnected.set()  # Inicialmente el maestro está desconectado
+
+# Indica si el maestro hizo una petición HTTP recientemente.
+new_request_recieved = asyncio.Event()
 
 
 async def monitoring(get_app_data):
@@ -133,5 +144,6 @@ async def monitoring(get_app_data):
     await asyncio.gather(
         listen_for_discovery_messages(
             TEAM_NAME, BROADCAST_PORT, TCP_SERVER_PORT),
-        start_http_server(TCP_SERVER_PORT, get_app_data)
+        start_http_server(TCP_SERVER_PORT, get_app_data),
+        check_master_connection()
     )

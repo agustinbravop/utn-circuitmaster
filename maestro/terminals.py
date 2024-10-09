@@ -52,7 +52,7 @@ class Terminal():
             except ValueError as e:
                 print(f"JSON inválido con {self.name}: {e}, '{data_json}'")
         except OSError as e:
-            print(f"Error en la solicitud HTTP: {e}")
+            print(f"Error en la solicitud al terminal: {e}")
             client_socket.close()
             self.forget_terminal()
             return None
@@ -100,7 +100,7 @@ def get_terminal_by_name(name: str):
 
 async def poll_terminal_data():
     """Polling de datos a todos los terminales encontrados y conectados."""
-    interval_seconds = 0.5
+    interval_seconds = 0.3
     while True:
         for terminal in connected_terminals:
             terminal.get_data()

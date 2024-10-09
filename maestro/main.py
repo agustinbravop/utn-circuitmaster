@@ -29,9 +29,9 @@ async def master_monitoring():
     print("Dirección de broadcast:", broadcast_ip)
 
     await asyncio.gather(
+        run_http_server(ip_address, HTTP_SERVER_PORT),
         discover_terminals(broadcast_ip, BROADCAST_PORT),
         poll_terminal_data(),
-        run_http_server(ip_address, HTTP_SERVER_PORT)
     )
 
 asyncio.run(master_monitoring())

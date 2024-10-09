@@ -25,10 +25,12 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
     """Enviar periódicamente un mensaje de broadcast para descubrir a los controladores terminales."""
     # Crear un socket UDP
     udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Habilitar la opción SO_REUSEADDR para permitir reuso del puerto
+    udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     # Configurar el socket UDP para enviar un broadcast
     udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    # No bloquear la ejecución si no hay mensajes
-    udp.setblocking(False)
+    # Esperar cierto timeout antes de lanzar error si no hay mensajes
+    udp.settimeout(0.2)
 
     time_interval_seconds = 3  # Tiempo entre broadcast y broadcast
 
@@ -37,6 +39,8 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
             udp.sendto(b"DISCOVER", (broadcast_ip, broadcast_port))
 
             # Intentar leer bytes del socket UDP
+            # FIXME: un terminal se detecta recién en la iteración siguiente a la del broadcast enviado
+            # FIXME: en cada iteración, solo un terminal se añade
             response, addr = udp.recvfrom(512)
             if response.startswith(b"TERMINAL"):
                 _, terminal_name, port = response.decode().split(";")

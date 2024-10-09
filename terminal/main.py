@@ -11,7 +11,7 @@ async def operations():
 
 def get_app_data():
     # Función que devuelve un `dict` con la data para el maestro.
-    return {"tiempo": time.time()}
+    return {"tiempo": time.time() % 100}
 
 
 async def main():
