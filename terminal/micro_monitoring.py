@@ -118,5 +118,5 @@ async def monitoring(get_app_data):
     await asyncio.gather(
         listen_for_discovery_messages(
             TEAM_NAME, BROADCAST_PORT, TCP_SERVER_PORT),
-        start_tcp_server(TCP_SERVER_PORT, get_app_data)
+        start_http_server(TCP_SERVER_PORT, get_app_data)
     )
