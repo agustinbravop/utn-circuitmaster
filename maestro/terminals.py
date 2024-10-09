@@ -5,22 +5,29 @@ import json
 class Terminal():
     def __init__(self, name: str):
         self.name = name
-        self.writer = None
-        self.reader = None
+        self.socket = None
 
     def is_connected(self):
         """Da `True` si el maestro está conectado al server TCP del terminal."""
-        return self.writer is not None
+        return self.socket is not None
 
-    async def connect_to_terminal(self, ip: str, port: int):
+    async def connect_to_terminal(self, pool, ip: str, port: int):
         """Conectar (mediante `asyncio`) al server TCP del terminal."""
         try:
-            self.reader, self.writer = await asyncio.open_connection(ip, port)
+            self.socket = pool.socket(
+                pool.AF_INET, pool.SOCK_STREAM)
+            self.socket.setsockopt(pool.SOL_SOCKET, pool.SO_REUSEADDR, 1)
+
+            # Tiempo de espera para operaciones de socket
+            self.socket.connect((ip, port))
+            self.socket.setblocking(False)
             print(f"Conectado a {self.name} en {ip}:{port}")
             # Agregarlo al arreglo global de terminales conectados
             connected_terminals.append(self)
+            print([t.name for t in connected_terminals])
         except OSError as e:
-            print(f"Error al conectarse a {self.name}: {e}.")
+            print(f"Error al conectarse a {self.name}: {e}")
+            self.socket = None
 
     async def get_data(self):
         """Solicitar datos al servidor TCP del terminal y los guarda en la variable global."""
@@ -31,35 +38,43 @@ class Terminal():
         try:
             # Enviar petición al servidor
             message = "GETDATA"
-            self.writer.write(message.encode())  # Acumula el mensaje al buffer
-            await self.writer.drain()           # Envía el buffer al stream
+            self.socket.send(message.encode())
 
             # Recibir la respuesta del servidor
-            data_json = await self.reader.read(8192)
+            buffer = bytearray(4096)
+            try:
+                length = self.socket.recv_into(buffer)
+            except OSError:
+                # No hay mensaje disponible
+                return
 
-            if data_json == b"":
+            data_json = buffer[:length].decode()
+
+            if data_json == "":
                 # Mensaje de desconexión
                 await self.close_connection()
                 return
+
             try:
                 terminal_data[self.name] = json.loads(data_json)
             except ValueError as e:
-                print(f"JSON inválido con {self.name}: {e}, {data_json}")
-        except Exception as e:
+                print(f"JSON inválido con {self.name}: {e}, '{data_json}'")
+        except OSError as e:
             print(f"Error con {self.name}: {e}")
             await self.close_connection()
 
     async def close_connection(self):
         """Cerrar la conexión con el server TCP del dispositivo terminal."""
-        if self.is_connected():
-            self.writer.close()
-            await self.writer.wait_closed()
-            self.writer = None
-            self.reader = None
-            # Quitarlo de la lista global de terminales conectados
-            if self in connected_terminals:
-                connected_terminals.remove(self)
+        if not self.is_connected():
+            # Ya está desconectado
+            return
+
+        self.socket.close()
+        self.socket = None
         print(f"Desconectado de {self.name}")
+        # Quitarlo de la lista global de terminales conectados
+        if self in connected_terminals:
+            connected_terminals.remove(self)
 
 
 # Terminales a monitorear en la red (un terminal por cada equipo)

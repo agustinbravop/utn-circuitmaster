@@ -1,39 +1,40 @@
 from terminals import terminal_data
 import asyncio
 import json
-import socketpool
-import wifi
 
 
-async def run_http_server(ip: str, port: int):
+async def run_http_server(pool, ip: str, port: int):
     """Server HTTP para el monitoreo mediante un dashboard web."""
-    pool = socketpool.SocketPool(wifi.radio)
     server_socket = pool.socket(pool.AF_INET, pool.SOCK_STREAM)
     server_socket.setsockopt(pool.SOL_SOCKET, pool.SO_REUSEADDR, 1)
     server_socket.bind((ip, port))
     server_socket.listen(5)
+    server_socket.setblocking(False)
     print(f"Servidor HTTP escuchando en {ip}:{port}")
 
     while True:
         try:
             client_socket, client_address = server_socket.accept()
             print(f"Conexión aceptada de {client_address}")
-            handle_http_request(client_socket)
-        except OSError as e:
-            print(f"Error aceptando conexión: {e}")
-        await asyncio.wait(0.1)
+            await handle_http_request(client_socket)
+        except OSError:
+            # No hay conexiones disponibles
+            pass
+        await asyncio.sleep(0.1)
 
 
 async def handle_http_request(client_socket):
     """Atender una petición HTTP."""
     try:
         while True:
-            request = bytearray(1024)
+            buffer = bytearray(1024)
             try:
-                client_socket.recv_into(request)
+                length = client_socket.recv_into(buffer)
             except OSError:
                 # No hay mensajes disponibles
-                pass
+                continue
+
+            request = buffer[:length]
 
             if request == b"":
                 # Mensaje de desconexión
@@ -47,7 +48,7 @@ async def handle_http_request(client_socket):
                 if header.lower().startswith("connection:"):
                     connection_type = header.split(":")[1].strip().lower()
 
-            response = request_router(request)
+            response = route_request(request)
 
             if connection_type == "keep-alive":
                 # Agregar encabezado Connection si el browser solicitó 'keep-alive'
@@ -59,14 +60,14 @@ async def handle_http_request(client_socket):
             if connection_type != "keep-alive":
                 # Cerrar la conexión si no se especificó 'keep-alive'
                 break
-            await asyncio.wait(0.1)
+            await asyncio.sleep(0.1)
     except OSError as e:
         print(f"Error en el servidor HTTP: {e}")
     finally:
         client_socket.close()
 
 
-def request_router(request):
+def route_request(request):
     """Asocia un handler al método y path de la petición HTTP."""
     method, path, _ = request[0].split(" ")
 
