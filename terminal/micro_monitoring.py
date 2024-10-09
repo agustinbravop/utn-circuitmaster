@@ -60,41 +60,39 @@ async def listen_for_discovery_messages(team_name: str, broadcast_port: int, tcp
         await master_disconnected.wait()
 
 
-async def start_tcp_server(port: int, get_app_data):
-    """Iniciar un servidor TCP para que el maestro pueda conectarse."""
-    server = await asyncio.start_server(await create_handler(get_app_data), "0.0.0.0", port)
+async def start_http_server(port: int, get_app_data):
+    """Iniciar un servidor HTTP para que el maestro pueda conectarse."""
+    handler = await create_handler(get_app_data)
+    server = await asyncio.start_server(handler, "0.0.0.0", port)
     await server.wait_closed()
 
 
 async def create_handler(get_app_data):
-    """Construye un handler con acceso a la función para obtener datos del terminal."""
+    """Construye un handler HTTP que también puede obtener datos del terminal."""
 
     async def handle_client(reader, writer):
-        """Manejar la conexión del maestro de forma asincrónica."""
+        """Manejar la conexión con el maestro de forma asincrónica."""
         master_disconnected.clear()
         addr = writer.get_extra_info("peername")
         print(f"Conexión establecida con {addr}")
 
-        while True:
-            try:
-                data = await reader.read(1024)
+        try:
+            request = await reader.read(1024)
+            request_str = request.decode().strip()
 
-                if data == b"":
-                    # Mensaje de desconexión
-                    break
-
-                if data == b"GETDATA":
-                    # Enviar la data del terminal
-                    response = json.dumps(get_app_data())
-                    writer.write(response.encode())
-                    await writer.drain()
-
-            except OSError as e:
-                print(f"Error en la conexión: {e}")
-
-        writer.close()
-        await writer.wait_closed()
-        master_disconnected.set()
+            if "GET" in request_str:
+                # Enviar la data del terminal
+                json_data = json.dumps(get_app_data())
+                response = f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {
+                    len(json_data)}\r\n\r\n{json_data}"
+                writer.write(response.encode())
+                await writer.drain()
+        except OSError as e:
+            print(f"Error en la conexión: {e}")
+        finally:
+            writer.close()
+            await writer.wait_closed()
+            master_disconnected.set()
 
     return handle_client
 
