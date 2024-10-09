@@ -46,13 +46,13 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
                     print(f"Error: nombre de terminal {terminal} no conocido")
                     continue
 
-                if terminal.is_connected():
+                if terminal.is_configured():
                     # Terminal ya conectada
                     continue
 
                 print(f"Encontrado a {terminal_name} en {addr[0]}:{port}")
                 # TODO: conectar concurrentemente los varios terminales descubiertos.
-                await terminal.connect_to_terminal(addr[0], int(port))
+                await terminal.configure_terminal(addr[0], int(port))
         except OSError:
             # Ceder el control si no hay mensajes
             await asyncio.sleep(time_interval_seconds)
