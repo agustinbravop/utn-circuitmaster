@@ -2,9 +2,7 @@ from http_server import run_http_server
 from network_discovery import calculate_broadcast, discover_terminals
 from wlan import connect_to_wifi
 from terminals import poll_terminal_data
-import asyncio
-import socketpool
-import wifi
+import uasyncio as asyncio
 
 
 # Datos para conectarse a la red WiFi
@@ -21,20 +19,19 @@ async def master_monitoring():
 
     if_config = await connect_to_wifi(WLAN_SSID, WLAN_PASSWORD)
     if if_config is None:
-        print("Error al conectar a la red Wifi")
+        print("Error al conectar a la red Wifi.")
         return None
 
-    ip_address, subnet_mask = if_config
+    ip_address, subnet_mask, _, _ = if_config
     print(f"Conectado! IP: {ip_address}, Máscara de subred: {subnet_mask}")
 
     broadcast_ip = calculate_broadcast(ip_address, subnet_mask)
     print("Dirección de broadcast:", broadcast_ip)
-    pool = socketpool.SocketPool(wifi.radio)
 
     await asyncio.gather(
-        discover_terminals(pool, broadcast_ip, BROADCAST_PORT),
+        discover_terminals(broadcast_ip, BROADCAST_PORT),
         poll_terminal_data(),
-        run_http_server(pool, ip_address, HTTP_SERVER_PORT)
+        run_http_server(ip_address, HTTP_SERVER_PORT)
     )
 
 asyncio.run(master_monitoring())

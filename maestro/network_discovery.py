@@ -1,5 +1,6 @@
+import socket
 from terminals import get_terminal_by_name
-import asyncio
+import uasyncio as asyncio
 
 
 def calculate_broadcast(ip: str, mask: str):
@@ -20,11 +21,12 @@ def bytes_to_ip(ip_bytes: list[int]):
     return ".".join(str(b) for b in ip_bytes)
 
 
-async def discover_terminals(pool, broadcast_ip: str, broadcast_port: int):
+async def discover_terminals(broadcast_ip: str, broadcast_port: int):
     """Enviar periódicamente un mensaje de broadcast para descubrir a los controladores terminales."""
-    print("Descubriendo terminales...")
     # Crear un socket UDP
-    udp = pool.socket(pool.AF_INET, pool.SOCK_DGRAM)
+    udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Configurar el socket UDP para enviar un broadcast
+    udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     # No bloquear la ejecución si no hay mensajes
     udp.setblocking(False)
 
@@ -35,10 +37,7 @@ async def discover_terminals(pool, broadcast_ip: str, broadcast_port: int):
             udp.sendto(b"DISCOVER", (broadcast_ip, broadcast_port))
 
             # Intentar leer bytes del socket UDP
-            buffer = bytearray(512)
-            length, addr = udp.recvfrom_into(buffer)
-            response = buffer[:length]
-
+            response, addr = udp.recvfrom(512)
             if response.startswith(b"TERMINAL"):
                 _, terminal_name, port = response.decode().split(";")
                 terminal = get_terminal_by_name(terminal_name)
@@ -53,7 +52,7 @@ async def discover_terminals(pool, broadcast_ip: str, broadcast_port: int):
 
                 print(f"Encontrado a {terminal_name} en {addr[0]}:{port}")
                 # TODO: conectar concurrentemente los varios terminales descubiertos.
-                await terminal.connect_to_terminal(pool, addr[0], int(port))
+                await terminal.connect_to_terminal(addr[0], int(port))
         except OSError:
             # Ceder el control si no hay mensajes
             await asyncio.sleep(time_interval_seconds)

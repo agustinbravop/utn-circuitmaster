@@ -1,40 +1,20 @@
 from terminals import terminal_data
-import asyncio
-import json
+import uasyncio as asyncio
+import ujson as json
 
 
-async def run_http_server(pool, ip: str, port: int):
+async def run_http_server(ip: str, port: int):
     """Server HTTP para el monitoreo mediante un dashboard web."""
-    server_socket = pool.socket(pool.AF_INET, pool.SOCK_STREAM)
-    server_socket.setsockopt(pool.SOL_SOCKET, pool.SO_REUSEADDR, 1)
-    server_socket.bind((ip, port))
-    server_socket.listen(5)
-    server_socket.setblocking(False)
+    server = await asyncio.start_server(handle_http_request, ip, port)
     print(f"Servidor HTTP escuchando en {ip}:{port}")
-
-    while True:
-        try:
-            client_socket, client_address = server_socket.accept()
-            print(f"Conexión aceptada de {client_address}")
-            await handle_http_request(client_socket)
-        except OSError:
-            # No hay conexiones disponibles
-            pass
-        await asyncio.sleep(0.1)
+    await server.wait_closed()
 
 
-async def handle_http_request(client_socket):
+async def handle_http_request(reader, writer):
     """Atender una petición HTTP."""
     try:
         while True:
-            buffer = bytearray(1024)
-            try:
-                length = client_socket.recv_into(buffer)
-            except OSError:
-                # No hay mensajes disponibles
-                continue
-
-            request = buffer[:length]
+            request = await reader.read(1024)
 
             if request == b"":
                 # Mensaje de desconexión
@@ -55,16 +35,17 @@ async def handle_http_request(client_socket):
                 response.replace(
                     b"\r\n\r\n", "\r\nConnection: keep-alive\r\n\r\n".encode(), 1)
 
-            client_socket.send(response)
+            writer.write(response)
+            await writer.drain()
 
             if connection_type != "keep-alive":
                 # Cerrar la conexión si no se especificó 'keep-alive'
                 break
-            await asyncio.sleep(0.1)
     except OSError as e:
         print(f"Error en el servidor HTTP: {e}")
     finally:
-        client_socket.close()
+        writer.close()
+        await writer.wait_closed()
 
 
 def route_request(request):
