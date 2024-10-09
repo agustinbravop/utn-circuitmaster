@@ -74,7 +74,7 @@ async def create_handler(get_app_data):
         """Manejar la conexión con el maestro de forma asincrónica."""
         master_disconnected.clear()
         addr = writer.get_extra_info("peername")
-        print(f"Conexión establecida con {addr}")
+        print(f"Petición HTTP recibida de {addr}")
 
         try:
             request = await reader.read(1024)

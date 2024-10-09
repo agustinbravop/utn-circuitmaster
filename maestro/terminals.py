@@ -13,7 +13,7 @@ class Terminal():
         """Da `True` si el maestro tiene los datos del servidor HTTP del terminal."""
         return self.ip is not None and self.port is not None
 
-    async def configure_terminal(self, ip: str, port: int):
+    def configure_terminal(self, ip: str, port: int):
         """Conectar (mediante `asyncio`) al server TCP del terminal."""
         self.ip = ip
         self.port = port
@@ -21,25 +21,27 @@ class Terminal():
         # Agregarlo al arreglo global de terminales conectados
         connected_terminals.append(self)
 
-    async def get_data(self):
+    def get_data(self):
         """Solicitar datos al servidor HTTP del terminal y los guarda en la variable global."""
         if not self.is_configured():
             # Terminal no conectado, no se puede monitorear
             return
 
-        # Enviar petición al servidor
-        request = "GET /data HTTP/1.1\r\nHost: {self.ip}\r\nConnection: close\r\n\r\n"
-        reader, writer = await asyncio.open_connection(self.ip, self.port)
+        addr_info = socket.getaddrinfo(self.ip, self.port)
+        addr = addr_info[0][-1]
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        client_socket.settimeout(0.2)
 
         try:
-            writer.write(request.encode())  # Acumula el mensaje al buffer
-            await writer.drain()            # Envía el buffer al stream
+            client_socket.connect(addr)
 
-            response = await reader.read(4096)
+            request = "GET /data HTTP/1.1\r\nHost: {self.ip}\r\nConnection: close\r\n\r\n"
+            client_socket.send(request.encode())
 
-            # Cerrar la conexión
-            writer.close()
-            await writer.wait_closed()
+            response = client_socket.recv(4096)
+
+            client_socket.close()
 
             # Extraer el cuerpo de la respuesta
             response = response.decode()
@@ -51,8 +53,7 @@ class Terminal():
                 print(f"JSON inválido con {self.name}: {e}, '{data_json}'")
         except OSError as e:
             print(f"Error en la solicitud HTTP: {e}")
-            writer.close()
-            await writer.wait_closed()
+            client_socket.close()
             self.forget_terminal()
             return None
 
@@ -99,8 +100,8 @@ def get_terminal_by_name(name: str):
 
 async def poll_terminal_data():
     """Polling de datos a todos los terminales encontrados y conectados."""
-    interval_seconds = 1
+    interval_seconds = 0.5
     while True:
-        tasks = [terminal.get_data() for terminal in connected_terminals]
-        await asyncio.gather(*tasks)
+        for terminal in connected_terminals:
+            terminal.get_data()
         await asyncio.sleep(interval_seconds)

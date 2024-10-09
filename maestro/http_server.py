@@ -11,7 +11,7 @@ async def run_http_server(ip: str, port: int):
 
 
 async def handle_http_request(reader, writer):
-    """Atender una petición HTTP."""
+    """Atender una petición HTTP del dashboard web."""
     try:
         while True:
             request = await reader.read(1024)
@@ -89,10 +89,17 @@ def serve_file(path: str, content_type: str):
 
 def serve_data():
     """Responder con la data (en JSON) más reciente de los terminales."""
-    json_data = json.dumps(terminal_data)
+    try:
+        json_data = json.dumps(terminal_data)  # Convertir a JSON
+    except ValueError as e:
+        # Manejar el caso de que el JSON esté mal formado
+        print(f"Error al serializar JSON: {e}, '{terminal_data}'")
+        return "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".encode()
+
+    # Sin el '+2' en el Content-Length el browser no lee el último '}'
     response = "HTTP/1.1 200 OK\r\n" + \
         "Content-Type: application/json\r\n" + \
-        f"Content-Length: {len(json_data)}\r\n" + \
+        f"Content-Length: {len(json_data)+2}\r\n" + \
         "\r\n" + \
         f"{json_data}"
 
