@@ -35,7 +35,7 @@ class Terminal():
             writer.write(request.encode())  # Acumula el mensaje al buffer
             await writer.drain()            # Envía el buffer al stream
 
-            data_json = await reader.read(4096)
+            response = await reader.read(4096)
 
             # Cerrar la conexión
             writer.close()
@@ -44,7 +44,7 @@ class Terminal():
             # Extraer el cuerpo de la respuesta
             response = response.decode()
             body_start = response.find("\r\n\r\n") + 4
-            response[body_start:]
+            data_json = response[body_start:]
             try:
                 terminal_data[self.name] = json.loads(data_json)
             except ValueError as e:
