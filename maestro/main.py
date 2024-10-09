@@ -2,7 +2,7 @@ from http_server import run_http_server
 from network_discovery import calculate_broadcast, discover_terminals
 from wlan import connect_to_wifi
 from terminals import poll_terminal_data
-import uasyncio as asyncio
+import asyncio
 
 
 # Datos para conectarse a la red WiFi
@@ -22,7 +22,7 @@ async def master_monitoring():
         print("Error al conectar a la red Wifi.")
         return None
 
-    ip_address, subnet_mask, _, _ = if_config
+    ip_address, subnet_mask = if_config
     print(f"Conectado! IP: {ip_address}, Máscara de subred: {subnet_mask}")
 
     broadcast_ip = calculate_broadcast(ip_address, subnet_mask)
