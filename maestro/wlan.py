@@ -1,28 +1,28 @@
-import wifi
-import asyncio
-import binascii
+import network
+import uasyncio as asyncio
+import ubinascii as binascii
 
 
 async def connect_to_wifi(ssid: str, password: str, max_retries=3):
     """Conecta el dispositivo a Wifi. Devuelve la dirección IP y la máscara de subred."""
-    mac_address = binascii.hexlify(wifi.radio.mac_address, ":").decode()
+    # Configurar el WiFi en modo cliente (station)
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+
+    mac_address = binascii.hexlify(
+        network.WLAN().config("mac"), ":").decode()
     print(f"MAC: {mac_address}")
 
     retries = 0
     print(f"Conectando a WiFi...", end="")
-
-    while retries < max_retries:
-
-        try:
-            wifi.radio.connect(ssid, password)
-            retries = max_retries
-        except Exception as e:
-            print(".", e, end="")
-            retries += 1
-            await asyncio.sleep(1)  # Esperar antes del próximo intento
+    while not wlan.isconnected() and retries < max_retries:
+        print(".", end="")
+        wlan.connect(ssid, password)
+        retries += 1
+        await asyncio.sleep(2)  # Esperar antes del próximo intento
 
     print()  # Termina la cadena de puntos suspensivos
-    if wifi.radio.connected:
-        return str(wifi.radio.ipv4_address), str(wifi.radio.ipv4_subnet)
+    if wlan.isconnected():
+        return wlan.ifconfig()
     else:
         return None

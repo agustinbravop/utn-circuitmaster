@@ -1,7 +1,6 @@
-import socketpool
+import socket
 from terminals import get_terminal_by_name
-import asyncio
-import wifi
+import uasyncio as asyncio
 
 
 def calculate_broadcast(ip: str, mask: str):
@@ -25,8 +24,9 @@ def bytes_to_ip(ip_bytes: list[int]):
 async def discover_terminals(broadcast_ip: str, broadcast_port: int):
     """Enviar periódicamente un mensaje de broadcast para descubrir a los controladores terminales."""
     # Crear un socket UDP
-    pool = socketpool.SocketPool(wifi.radio)
-    udp = pool.socket(pool.AF_INET, pool.SOCK_DGRAM)
+    udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Configurar el socket UDP para enviar un broadcast
+    udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     # No bloquear la ejecución si no hay mensajes
     udp.setblocking(False)
 
@@ -36,10 +36,8 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
         try:
             udp.sendto(b"DISCOVER", (broadcast_ip, broadcast_port))
 
-            # Intentar leer 1024 bytes del socket UDP
-            buffer = bytearray(1024)
-            length, addr = udp.recvfrom_into(buffer)
-            response = buffer[:length]
+            # Intentar leer bytes del socket UDP
+            response, addr = udp.recvfrom(512)
             if response.startswith(b"TERMINAL"):
                 _, terminal_name, port = response.decode().split(";")
                 terminal = get_terminal_by_name(terminal_name)

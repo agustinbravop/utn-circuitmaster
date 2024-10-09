@@ -1,5 +1,5 @@
-import asyncio
-import json
+import uasyncio as asyncio
+import ujson as json
 
 
 class Terminal():
@@ -35,7 +35,7 @@ class Terminal():
             await self.writer.drain()           # Envía el buffer al stream
 
             # Recibir la respuesta del servidor
-            data_json = await self.reader.read(8192)
+            data_json = await self.reader.read(4096)
 
             if data_json == b"":
                 # Mensaje de desconexión
@@ -44,22 +44,25 @@ class Terminal():
             try:
                 terminal_data[self.name] = json.loads(data_json)
             except ValueError as e:
-                print(f"JSON inválido con {self.name}: {e}, {data_json}")
+                print(f"JSON inválido con {self.name}: {e}, '{data_json}'")
         except Exception as e:
             print(f"Error con {self.name}: {e}")
             await self.close_connection()
 
     async def close_connection(self):
         """Cerrar la conexión con el server TCP del dispositivo terminal."""
-        if self.is_connected():
-            self.writer.close()
-            await self.writer.wait_closed()
-            self.writer = None
-            self.reader = None
-            # Quitarlo de la lista global de terminales conectados
-            if self in connected_terminals:
-                connected_terminals.remove(self)
+        if not self.is_connected():
+            # Ya está desconectado
+            return
+
+        self.writer.close()
+        await self.writer.wait_closed()
+        self.writer = None
+        self.reader = None
         print(f"Desconectado de {self.name}")
+        # Quitarlo de la lista global de terminales conectados
+        if self in connected_terminals:
+            connected_terminals.remove(self)
 
 
 # Terminales a monitorear en la red (un terminal por cada equipo)
@@ -77,12 +80,12 @@ ALL_TERMINALS = [Terminal("TeoríaDelDescontrol"),
 # TODO: validar si funciona bien con varios terminales
 connected_terminals: list[Terminal] = []
 
-# Variable global con los datos recibidos de las terminales
+# Variable global con los datos recibidos de los terminales
 terminal_data = {}
 
 
 def get_terminal_by_name(name: str):
-    """Buscar la terminal con el nombre de equipo dado."""
+    """Buscar el terminal con el nombre de equipo dado."""
     for terminal in ALL_TERMINALS:
         if terminal.name == name:
             return terminal
