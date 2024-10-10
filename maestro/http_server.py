@@ -1,20 +1,41 @@
 from terminals import terminal_data
 import uasyncio as asyncio
 import ujson as json
+import socket
 
 
 async def run_http_server(ip: str, port: int):
     """Server HTTP para el monitoreo mediante un dashboard web."""
-    server = await asyncio.start_server(handle_http_request, ip, port)
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.setblocking(False)
+    server_socket.bind((ip, port))
+    server_socket.listen()
+
     print(f"Servidor HTTP escuchando en {ip}:{port}")
-    await server.wait_closed()
+    while True:
+        try:
+            client_socket, client_address = server_socket.accept()
+            client_socket.settimeout(3)
+            print(f"Conexión del dashboard web en: {client_address}")
+            # Manejar la solicitud HTTP
+            handle_http_request(client_socket)
+            # Cerrar la conexión
+            client_socket.close()
+        except:
+            # No hay conexiones disponibles
+            await asyncio.sleep(0.3)
 
 
-async def handle_http_request(reader, writer):
-    """Atender una petición HTTP."""
+def handle_http_request(client_socket):
+    """Atender una petición HTTP del dashboard web."""
     try:
         while True:
-            request = await reader.read(1024)
+            try:
+                request = client_socket.recv(1024)
+            except OSError:
+                # Desconexión por timeout
+                break
 
             if request == b"":
                 # Mensaje de desconexión
@@ -22,30 +43,11 @@ async def handle_http_request(reader, writer):
 
             request = request.decode().split("\r\n")
 
-            # Obtener el header "Connection" si existe
-            connection_type = "close"
-            for header in request:
-                if header.lower().startswith("connection:"):
-                    connection_type = header.split(":")[1].strip().lower()
-
             response = route_request(request)
 
-            if connection_type == "keep-alive":
-                # Agregar encabezado Connection si el browser solicitó 'keep-alive'
-                response.replace(
-                    b"\r\n\r\n", "\r\nConnection: keep-alive\r\n\r\n".encode(), 1)
-
-            writer.write(response)
-            await writer.drain()
-
-            if connection_type != "keep-alive":
-                # Cerrar la conexión si no se especificó 'keep-alive'
-                break
+            client_socket.send(response)
     except OSError as e:
         print(f"Error en el servidor HTTP: {e}")
-    finally:
-        writer.close()
-        await writer.wait_closed()
 
 
 def route_request(request):
@@ -78,7 +80,8 @@ def serve_file(path: str, content_type: str):
 
         response = "HTTP/1.1 200 OK\r\n" + \
             f"Content-Type: {content_type}\r\n" + \
-            f"Content-Length: {len(content)}\r\n" + \
+            f"Content-Length: {len(content.encode())}\r\n" + \
+            "Connection: close\r\n" + \
             "\r\n" + \
             f"{content}"
 
@@ -89,10 +92,18 @@ def serve_file(path: str, content_type: str):
 
 def serve_data():
     """Responder con la data (en JSON) más reciente de los terminales."""
-    json_data = json.dumps(terminal_data)
+    try:
+        json_data = json.dumps(terminal_data)  # Convertir a JSON
+    except ValueError as e:
+        # Manejar el caso de que el JSON esté mal formado
+        print(f"Error al serializar JSON: {e}, '{terminal_data}'")
+        return "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".encode()
+
+    # Sin el '+2' en el Content-Length el browser no lee el último '}'
     response = "HTTP/1.1 200 OK\r\n" + \
         "Content-Type: application/json\r\n" + \
-        f"Content-Length: {len(json_data)}\r\n" + \
+        f"Content-Length: {len(json_data.encode())}\r\n" + \
+        "Connection: close\r\n" + \
         "\r\n" + \
         f"{json_data}"
 

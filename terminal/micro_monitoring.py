@@ -1,8 +1,8 @@
 import network
 import socket
-import uasyncio as asyncio
-import ubinascii as binascii
-import ujson as json
+import asyncio
+import binascii
+import json
 
 
 async def connect_to_wifi(ssid: str, password: str, max_retries=5):
@@ -21,7 +21,7 @@ async def connect_to_wifi(ssid: str, password: str, max_retries=5):
         print(".", end="")
         wlan.connect(ssid, password)
         retries += 1
-        await asyncio.sleep(2)  # Esperar antes del próximo intento
+        await asyncio.sleep(1)  # Esperar antes del próximo intento
 
     print()
     if wlan.isconnected():
@@ -33,6 +33,8 @@ async def connect_to_wifi(ssid: str, password: str, max_retries=5):
 async def listen_for_discovery_messages(team_name: str, broadcast_port: int, tcp_port: int):
     """Esperar broadcast de descubrimiento del maestro."""
     udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Habilitar la opción SO_REUSEADDR para permitir reuso del puerto
+    udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     # Escuchar en todas las interfaces de red
     udp.bind(("0.0.0.0", broadcast_port))
     # No bloquear la ejecución si no hay mensajes
@@ -45,6 +47,7 @@ async def listen_for_discovery_messages(team_name: str, broadcast_port: int, tcp
                 print("Mensaje de descubrimiento recibido de:", addr)
                 response = f"TERMINAL;{team_name};{tcp_port}"
                 udp.sendto(response.encode(), addr)
+
         except OSError:
             await asyncio.sleep(1)  # Ceder control si no hay mensajes
 
@@ -63,9 +66,8 @@ async def create_handler(get_app_data):
 
     async def handle_client(reader, writer):
         """Manejar la conexión con el maestro de forma asincrónica."""
+        new_request_recieved.set()
         master_disconnected.clear()
-        addr = writer.get_extra_info("peername")
-        print(f"Conexión establecida con {addr}")
 
         try:
             request = await reader.read(1024)
@@ -80,12 +82,24 @@ async def create_handler(get_app_data):
                 await writer.drain()
         except OSError as e:
             print(f"Error en la conexión: {e}")
+            master_disconnected.set()
         finally:
             writer.close()
             await writer.wait_closed()
-            master_disconnected.set()
 
     return handle_client
+
+
+async def check_master_connection():
+    """Reinicia el descubrimiento del maestro si sucede un timeout en el servidor HTTP."""
+    timeout_seconds = 5
+    while True:
+        # Si `new_request_recieved` no fue seteado por el HTTP handler, desconectar al maestro
+        if not master_disconnected.is_set() and not new_request_recieved.is_set():
+            print("Back to discovery")
+            master_disconnected.set()
+        new_request_recieved.clear()
+        await asyncio.sleep(timeout_seconds)
 
 # Datos para conectarse a la red WiFi.
 WLAN_SSID = "agus"
@@ -96,9 +110,12 @@ BROADCAST_PORT = 10000
 TCP_SERVER_PORT = 10001
 TEAM_NAME = "Rompecircuitos"
 
-# Variable global que indica si el terminal está conectado al maestro
+# Indica si el maestro está conectado. Si no lo está, se vuelve al descubrimiento
 master_disconnected = asyncio.Event()
 master_disconnected.set()  # Inicialmente el maestro está desconectado
+
+# Indica si el maestro hizo una petición HTTP recientemente.
+new_request_recieved = asyncio.Event()
 
 
 async def monitoring(get_app_data):
@@ -118,5 +135,6 @@ async def monitoring(get_app_data):
     await asyncio.gather(
         listen_for_discovery_messages(
             TEAM_NAME, BROADCAST_PORT, TCP_SERVER_PORT),
-        start_http_server(TCP_SERVER_PORT, get_app_data)
+        start_http_server(TCP_SERVER_PORT, get_app_data),
+        check_master_connection()
     )
