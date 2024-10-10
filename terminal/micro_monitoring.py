@@ -18,14 +18,12 @@ async def connect_to_wifi(ssid: str, password: str, max_retries=5):
     print(f"MAC: {mac_address}")
 
     retries = 0
-    print(f"Conectando a WiFi...", end="")
+    print(f"Conectando a WiFi...")
     while not wlan.isconnected() and retries < max_retries:
-        print(".", end="")
         wlan.connect(ssid, password)
         retries += 1
         await asyncio.sleep(1)  # Esperar antes del próximo intento
 
-    print()
     if wlan.isconnected():
         return wlan.ifconfig()
     else:
@@ -102,7 +100,6 @@ async def check_master_connection():
             master_disconnected.set()
         new_request_recieved.clear()
         await asyncio.sleep(timeout_seconds)
-
 
 # Datos para conectarse a la red WiFi.
 WLAN_SSID = "agus"

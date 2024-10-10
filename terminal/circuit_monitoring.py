@@ -47,7 +47,7 @@ def listen_for_discovery_messages(udp, pool, terminal_ip, sensor_data):
             msg = buffer[:size]
             if msg == b"DISCOVER":
                 print("Mensaje de descubrimiento recibido")
-                response = f"TERMINAL TeoríaDelDescontrol"
+                response = f"TERMINAL TeoriaDelDescontrol"
                 tcp = connect_to_master_tcp_socket(pool, addr)
                 print(addr)
                 tcp.sendto(response.encode(), addr)
