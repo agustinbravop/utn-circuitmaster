@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -12,31 +16,38 @@ h1 {
   margin: 20px 0;
 }
 
+/* El dashboard completo con los nueve menus */
 #data-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
   grid-gap: 20px;
   width: 90%;
   max-width: 1200px;
   margin-bottom: 20px;
 }
 
+/* Cada menu asociado a un equipo */
 .terminal-box {
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  text-align: center;
 }
 
+/* El título del menu de cada equipo */
 .terminal-title {
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 10px;
+  cursor: pointer;
 }
 
+/* La información del menu de cada equipo */
 .terminal-data {
   font-size: 14px;
   color: #555;
+}
+
+details:not([open]) .terminal-data {
+  display: block;
 }

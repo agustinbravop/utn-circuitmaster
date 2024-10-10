@@ -15,9 +15,8 @@ async def run_http_server(ip: str, port: int):
     print(f"Servidor HTTP escuchando en {ip}:{port}")
     while True:
         try:
-            client_socket, client_address = server_socket.accept()
+            client_socket, _ = server_socket.accept()
             client_socket.settimeout(3)
-            print(f"Conexión del dashboard web en: {client_address}")
             # Manejar la solicitud HTTP
             handle_http_request(client_socket)
             # Cerrar la conexión
@@ -30,22 +29,20 @@ async def run_http_server(ip: str, port: int):
 def handle_http_request(client_socket):
     """Atender una petición HTTP del dashboard web."""
     try:
-        while True:
-            try:
-                request = client_socket.recv(1024)
-            except OSError:
-                # Desconexión por timeout
-                break
+        request = client_socket.recv(1024)
+    except OSError:
+        # Desconexión por timeout
+        return
 
-            if request == b"":
-                # Mensaje de desconexión
-                break
+    if request == b"":
+        # Mensaje de desconexión
+        return
 
-            request = request.decode().split("\r\n")
+    request = request.decode().split("\r\n")
 
-            response = route_request(request)
-
-            client_socket.send(response)
+    try:
+        response = route_request(request)
+        client_socket.send(response)
     except OSError as e:
         print(f"Error en el servidor HTTP: {e}")
 
@@ -58,6 +55,7 @@ def route_request(request):
         return "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".encode()
 
     if path == "/":
+        print(f"Recibida petición GET '/' del dashboard web")
         return serve_file("/www/index.html", "text/html")
     elif path.endswith(".html"):
         return serve_file(f"/www{path}", "text/html")
