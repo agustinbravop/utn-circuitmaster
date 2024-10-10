@@ -72,7 +72,7 @@ class Terminal():
 
 
 # Terminales a monitorear en la red (un terminal por cada equipo)
-ALL_TERMINALS = [Terminal("TeoríaDelDescontrol"),
+ALL_TERMINALS = [Terminal("TeoriaDelDescontrol"),
                  Terminal("ClubTA"),
                  Terminal("TeamISI"),
                  Terminal("Colapintos"),
