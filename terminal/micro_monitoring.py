@@ -105,7 +105,7 @@ WLAN_PASSWORD = "agustinb"
 
 # Datos para la interacción entre los terminales y el maestro.
 BROADCAST_PORT = 10000
-TCP_SERVER_PORT = 10001
+HTTP_SERVER_PORT = 10001
 TEAM_NAME = "Rompecircuitos"
 
 # Indica si el maestro está conectado. Si no lo está, se vuelve al descubrimiento
@@ -132,7 +132,7 @@ async def monitoring(get_app_data):
     print("Esperando mensajes de descubrimiento y conexiones del maestro...")
     await asyncio.gather(
         listen_for_discovery_messages(
-            TEAM_NAME, BROADCAST_PORT, TCP_SERVER_PORT),
-        start_http_server(TCP_SERVER_PORT, get_app_data),
+            TEAM_NAME, BROADCAST_PORT, HTTP_SERVER_PORT),
+        start_http_server(HTTP_SERVER_PORT, get_app_data),
         check_master_connection()
     )

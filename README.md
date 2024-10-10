@@ -42,3 +42,50 @@ De manera concurrente a la comunicación con los terminales, el maestro también
 La comunicación entre monitor web, maestro, y terminales, es la siguiente:
 
 ![Interacción entre Monitor, Maestro, y Terminal](docs/interacción-monitor-maestro-terminal.jpg)
+
+## ¿Cómo integrar un terminal al monitoreo?
+
+1. Agregar el código de monitoreo al microcontrolador terminal.
+
+En el file system del terminal se debe agregar el archivo `micro_monitoring.py` si se utiliza MicroPython, o `circuit_monitoring.py` si se utiliza CircuitPython.
+
+2. Definir los valores de las constantes.
+
+En ese archivo agregado se encuentran las siguientes constantes:
+
+```
+# Datos para conectarse a la red WiFi.
+WLAN_SSID = "agus"
+WLAN_PASSWORD = "agustinb"
+
+# Datos para la interacción entre los terminales y el maestro.
+BROADCAST_PORT = 10000
+HTTP_SERVER_PORT = 10001
+TEAM_NAME = "{team_name}"
+```
+
+El valor de `TEAM_NAME` debe ser exactamente uno de la siguiente lista, correspodiente al equipo responsable del terminal:
+
+- TeoriaDelDescontrol
+- ClubTA
+- TeamISI
+- Colapintos
+- Brogramadores
+- LosOgata
+- MonteCarlo
+- Rompecircuitos
+- LosFachas
+
+3. Definir los datos a monitorear.
+
+En el `main.py` del terminal, se debe definir una función `get_app_data()` que devuelve un `dict` con los datos a monitorear. Será llamada cada vez que se reciba un poll del maestro, y son los datos que van a llegar al dashboard web.
+
+Considerar que los datos no pueden ser muy largos, y deberían ser del estado actual. Si se desea un historial de datos, el dashboard web puede ir acumulando los datos recibidos, para evitar saturar al maestro.
+
+4. Realizar funcionamiento y monitoreo en concurrencia.
+
+Se utiliza la librería `uasyncio` en MicroPython, o `asyncio` en CircuitPython, para ejecutar el código común de monitoreo y el código específico del terminal de forma concurrente. Esto se logra con el código que se encuentra en `terminal/main.py`, donde `operations()` debe llamar al código específico del terminal, que se ejecuta a la par de `monitoring(get_app_data)`.
+
+5. Renderizar en el dashboard los datos monitoreados.
+
+En `/maestro/www/script.js` está el código para obtener en un browser los datos del maestro, y renderizarlos en el dashboard. Hay nueve funciones con nombre del tipo `render{team_name}`, cada una renderiza los datos del equipo correspondiente en su menú correspondiente. Cada equipo debe personalizar su menú.
