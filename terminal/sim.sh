@@ -1,4 +1,4 @@
-python main.py 10000 10001 TeoríaDelDescontrol &
+python main.py 10000 10001 TeoriaDelDescontrol &
 python main.py 10000 10002 ClubTA &
 python main.py 10000 10003 TeamISI &
 python main.py 10000 10004 Colapintos &
