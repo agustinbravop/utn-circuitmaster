@@ -15,6 +15,10 @@ Se utiliza la librería `asyncio` para la ejecución concurrente de:
 
 Nota: los archivos `/terminal/micro_monitoring.py` y `/terminal/circuit_monitoring.py` están orientados específicamente para MicroPython y CircuitPython respectivamente. Cumplen la misma funcionalidad, aunque cada equipo debe usar el que corresponde al runtime que decidieron utilizar.
 
+Diagrama de la red:
+
+![Diagrama de la red](docs/diagrama-red.jpg)
+
 ## Conexión a WiFi
 
 Al iniciarse los dispositivos, intentan conectarse a una red WiFi local cuyo `WLAN_SSID` y `WLAN_PASSWORD` se indican en constantes globales en los archivos `/maestro/main.py` y `/terminal/{circuit|micro}_monitoring.py`.
