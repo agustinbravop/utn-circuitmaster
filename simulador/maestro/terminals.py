@@ -38,9 +38,9 @@ class Terminal():
             await writer.drain()
         except OSError as e:
             print(f"Error al escribir a {self.name}: {e}")
+            self.forget_terminal()
             writer.close()
             await writer.wait_closed()
-            self.forget_terminal()
             return
 
         try:
@@ -49,9 +49,9 @@ class Terminal():
             await writer.wait_closed()
         except OSError as e:
             print(f"Error en la solicitud a {self.name}: {e}")
+            self.forget_terminal()
             writer.close()
             await writer.wait_closed()
-            self.forget_terminal()
             return
 
         # Extraer el cuerpo de la respuesta
@@ -108,19 +108,23 @@ def get_terminal_by_name(name: str):
 async def poll_terminal_data():
     """Polling de datos a todos los terminales encontrados y conectados."""
     while True:
-        # De a tres para no saturar el límite de 5 conexiones TCP
-        await asyncio.gather(
-            ALL_TERMINALS[0].get_data(),
-            ALL_TERMINALS[1].get_data(),
-            ALL_TERMINALS[2].get_data(),
-        )
-        await asyncio.gather(
-            ALL_TERMINALS[3].get_data(),
-            ALL_TERMINALS[4].get_data(),
-            ALL_TERMINALS[5].get_data(),
-        )
-        await asyncio.gather(
-            ALL_TERMINALS[6].get_data(),
-            ALL_TERMINALS[7].get_data(),
-            ALL_TERMINALS[8].get_data(),
-        )
+        try:
+            # De a tres para no saturar el límite de 5 conexiones TCP simultáneas
+            await asyncio.gather(
+                ALL_TERMINALS[0].get_data(),
+                ALL_TERMINALS[1].get_data(),
+                ALL_TERMINALS[2].get_data(),
+            )
+            await asyncio.gather(
+                ALL_TERMINALS[3].get_data(),
+                ALL_TERMINALS[4].get_data(),
+                ALL_TERMINALS[5].get_data(),
+            )
+            await asyncio.gather(
+                ALL_TERMINALS[6].get_data(),
+                ALL_TERMINALS[7].get_data(),
+                ALL_TERMINALS[8].get_data(),
+            )
+        except Exception as e:
+            print(f"Error en el polling: {e}")
+            pass
