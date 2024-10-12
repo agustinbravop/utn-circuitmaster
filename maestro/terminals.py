@@ -38,9 +38,9 @@ class Terminal():
             await writer.drain()
         except OSError as e:
             print(f"Error al escribir a {self.name}: {e}")
+            self.forget_terminal()
             writer.close()
             await writer.wait_closed()
-            self.forget_terminal()
             return
 
         try:
@@ -49,9 +49,9 @@ class Terminal():
             await writer.wait_closed()
         except OSError as e:
             print(f"Error en la solicitud a {self.name}: {e}")
+            self.forget_terminal()
             writer.close()
             await writer.wait_closed()
-            self.forget_terminal()
             return
 
         # Extraer el cuerpo de la respuesta
