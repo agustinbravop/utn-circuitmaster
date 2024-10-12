@@ -1,8 +1,10 @@
-import network
+# import network
 import socket
-import uasyncio as asyncio
-import ubinascii as binascii
-import ujson as json
+import asyncio
+import binascii
+import json
+import sys
+import netifaces as ni
 
 
 async def connect_to_wifi(ssid: str, password: str, max_retries=5):
@@ -100,13 +102,14 @@ async def check_master_connection():
         await asyncio.sleep(timeout_seconds)
 
 # Datos para conectarse a la red WiFi.
-WLAN_SSID = "agus"
-WLAN_PASSWORD = "agustinb"
+# WLAN_SSID = sys.argv[1]
+# WLAN_PASSWORD = sys.argv[2]
 
 # Datos para la interacción entre los terminales y el maestro.
-BROADCAST_PORT = 10000
-HTTP_SERVER_PORT = 10001
-TEAM_NAME = "Rompecircuitos"
+BROADCAST_PORT = int(sys.argv[1])
+HTTP_SERVER_PORT = int(sys.argv[2])
+TEAM_NAME = sys.argv[3]
+print(sys.argv)
 
 # Indica si el maestro está conectado. Si no lo está, se vuelve al descubrimiento
 master_disconnected = asyncio.Event()
@@ -121,12 +124,19 @@ async def monitoring(get_app_data):
     `get_app_data` es una función llamada en cada poll. Debe retornar el `dict` a enviar al maestro."""
     print(f"Controlador {TEAM_NAME}")
 
-    if_config = await connect_to_wifi(WLAN_SSID, WLAN_PASSWORD)
-    if if_config is None:
-        print("Error al conectar a la red Wifi.")
-        return None
+    # if_config = await connect_to_wifi(WLAN_SSID, WLAN_PASSWORD)
+    # if if_config is None:
+    #     print("Error al conectar a la red Wifi.")
+    #     return None
 
-    terminal_ip, subnet_mask, _, _ = if_config
+    # terminal_ip, subnet_mask, _, _ = if_config
+
+    # Obtener interfaz por defecto (en Windows)
+    interface = ni.gateways()['default'][ni.AF_INET][1]
+    addr = ni.ifaddresses(interface)[ni.AF_INET][0]
+
+    terminal_ip = addr['addr']
+    subnet_mask = addr['netmask']
     print(f"Conectado! IP: {terminal_ip}, Máscara de subred: {subnet_mask}")
 
     print("Esperando mensajes de descubrimiento del maestro...")
