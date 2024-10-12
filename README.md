@@ -1,19 +1,21 @@
 # utn-circuitmaster
 
-Repositorio para el controlador maestro del laboratorio de microcontroladores de Tecnologías para la Automatización, UTN FRRe 2024.
+Repositorio para el controlador maestro del laboratorio de microcontroladores de Tecnologías para la Automatización, UTN FRRe 2024. Estructura del proyecto:
 
-El código MicroPython en `maestro/` sirve para el único microcontrolador maestro de la red. El código en `terminal/` contiene el boilerplate necesario para cada microcontrolador terminal, y deberá ser personalizado por cada equipo para que se pueda adaptar al código específico de ese equipo. Este repositorio se encarga del:
+- `maestro/`: código MicroPython para el único microcontrolador maestro de la red.
+- `terminal/`: código boilerplate necesario para cada microcontrolador terminal, y deberá ser adaptado por cada equipo. `circuit_monitoring.py` es para CircuitPython, y `micro_monitoring.py` es para MicroPython. Cumplen la misma funcionalidad, pero cada equipo debe usar el que corresponde al runtime que decidieron utilizar.
+- `simulador/`: fork de las otras dos carpetas, adaptado para ser ejecutado en Python. `simulador/maestro/sim.sh` simula a un maestro desde cualquier PC Windows, y `simulador/terminal/sim.sh` simula varios terminales.
+
+Este repositorio se encarga del:
 
 - **Descubrimiento de la red**: que el maestro y los terminales se vinculen automáticamente.
 - **Polling**: desde el maestro, monitorear en tiempo real el estado de todos los terminales.
 - **Dashboard**: desde un dashboard web, monitorear en tiempo real el estado de todos los terminales de la red.
 
-Se utiliza la librería `asyncio` para la ejecución concurrente de:
+Se utiliza la librería `uasyncio` en MicroPython (o `asyncio` en CircuitPython) para la ejecución concurrente de:
 
 - En el maestro: el servidor HTTP, el descubrimiento de la red, y el polling a los terminales.
 - En cada terminal: la escucha de mensajes de descubrimiento, el servidor HTTP para responder a los polls del maestro, y el código específico del equipo.
-
-Nota: los archivos `/terminal/micro_monitoring.py` y `/terminal/circuit_monitoring.py` están orientados específicamente para MicroPython y CircuitPython respectivamente. Cumplen la misma funcionalidad, aunque cada equipo debe usar el que corresponde al runtime que decidieron utilizar.
 
 Diagrama de la red:
 
@@ -47,7 +49,7 @@ La comunicación entre monitor web, maestro, y terminales, es la siguiente:
 
 ![Interacción entre Monitor, Maestro, y Terminal](docs/interacción-monitor-maestro-terminal.jpg)
 
-## ¿Cómo integrar un terminal al monitoreo?
+## ¿Cómo hago para que mi terminal pueda integrarse a la red?
 
 1. Agregar el código de monitoreo al microcontrolador terminal.
 
