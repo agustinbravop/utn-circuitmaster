@@ -1,3 +1,4 @@
+# Importante! Ejecutar este script estando en `simulador/terminal/`
 # python main.py <BROADCAST_PORT> <HTTP_SERVER_PORT> <TEAM_NAME>
 python main.py 10000 10001 TeoriaDelDescontrol &
 python main.py 10000 10002 ClubTA &
