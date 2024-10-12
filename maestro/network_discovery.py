@@ -1,5 +1,5 @@
 import socket
-from terminals import get_terminal_by_name
+from terminals import ALL_TERMINALS, get_terminal_by_name
 import uasyncio as asyncio
 
 
@@ -30,18 +30,20 @@ async def discover_terminals(broadcast_ip: str, broadcast_port: int):
     # Configurar el socket UDP para enviar un broadcast
     udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     # Esperar cierto timeout antes de lanzar error si no hay mensajes
-    udp.settimeout(0.2)
+    udp.setblocking(False)
 
     time_interval_seconds = 3  # Tiempo entre broadcast y broadcast
 
     while True:
         try:
-            udp.sendto(b"DISCOVER", (broadcast_ip, broadcast_port))
+            all_connected = all(t.is_configured() for t in ALL_TERMINALS)
+            if not all_connected:
+                udp.sendto(b"DISCOVER", (broadcast_ip, broadcast_port))
 
             # Intentar leer bytes del socket UDP
             # FIXME: un terminal se detecta recién en la iteración siguiente a la del broadcast enviado
             # FIXME: en cada iteración, solo un terminal se añade
-            response, addr = udp.recvfrom(512)
+            response, addr = udp.recvfrom(1024)
             if response.startswith(b"TERMINAL"):
                 _, terminal_name, port = response.decode().split(";")
                 terminal = get_terminal_by_name(terminal_name)

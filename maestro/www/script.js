@@ -9,8 +9,31 @@ async function fetchData() {
   }
 }
 
+const ALL_TERMINALS = [
+  "TeoriaDelDescontrol",
+  "ClubTA",
+  "TeamISI",
+  "Colapintos",
+  "Brogramadores",
+  "LosOgata",
+  "MonteCarlo",
+  "Rompecircuitos",
+  "LosFachas",
+];
+
 /** Renderizar la información disponible de cada equipo en su menu del dashboard. */
 function renderData(data) {
+  if (data.terminales_conectados) {
+    for (const t of ALL_TERMINALS) {
+      // Indicar si está desconectado o no
+      const container = document.getElementById(t);
+      if (data.terminales_conectados.includes(t)) {
+        container.parentElement.classList.remove("disconnected");
+      } else {
+        container.parentElement.classList.add("disconnected");
+      }
+    }
+  }
   if (data.TeoriaDelDescontrol) {
     renderTeoriaDelDescontrol(data.TeoriaDelDescontrol);
   }
@@ -94,7 +117,7 @@ function renderLosFachas(data) {
   container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
 }
 
-const FETCH_INTERVAL_MS = 1000;
+const FETCH_INTERVAL_MS = 500;
 
 // Buscar data nueva cada cierto intervalo
 setInterval(fetchData, FETCH_INTERVAL_MS);

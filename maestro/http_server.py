@@ -8,9 +8,9 @@ async def run_http_server(ip: str, port: int):
     """Server HTTP para el monitoreo mediante un dashboard web."""
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.setblocking(False)
     server_socket.bind((ip, port))
     server_socket.listen()
+    server_socket.setblocking(False)
 
     print(f"Servidor HTTP escuchando en {ip}:{port}")
     while True:
@@ -23,7 +23,7 @@ async def run_http_server(ip: str, port: int):
             client_socket.close()
         except:
             # No hay conexiones disponibles
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(0.1)
 
 
 def handle_http_request(client_socket):
@@ -56,14 +56,14 @@ def route_request(request):
 
     if path == "/":
         print(f"Recibida petición GET '/' del dashboard web")
-        return serve_file("/www/index.html", "text/html")
+        return serve_file("www/index.html", "text/html")
     elif path.endswith(".html"):
-        return serve_file(f"/www{path}", "text/html")
+        return serve_file(f"www{path}", "text/html")
     elif path.endswith(".css"):
-        return serve_file(f"/www{path}", "text/css")
+        return serve_file(f"www{path}", "text/css")
     elif path.endswith(".js"):
         return serve_file(
-            f"/www{path}", "application/javascript")
+            f"www{path}", "application/javascript")
     elif path == "/data":
         return serve_data()
     else:

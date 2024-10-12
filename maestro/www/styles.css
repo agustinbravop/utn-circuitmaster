@@ -35,6 +35,10 @@ h1 {
   padding: 20px;
 }
 
+.terminal-box.disconnected {
+  border: 1px solid red;
+}
+
 /* El título del menu de cada equipo */
 .terminal-title {
   font-size: 18px;
