@@ -4,7 +4,7 @@ Repositorio para el controlador maestro del laboratorio de microcontroladores de
 
 - `maestro/`: código MicroPython para el único microcontrolador maestro de la red.
 - `terminal/`: código boilerplate necesario para cada microcontrolador terminal, y deberá ser adaptado por cada equipo. `circuit_monitoring.py` es para CircuitPython, y `micro_monitoring.py` es para MicroPython. Cumplen la misma funcionalidad, pero cada equipo debe usar el que corresponde al runtime que decidieron utilizar.
-- `simulador/`: fork de las otras dos carpetas, adaptado para ser ejecutado en Python. `simulador/maestro/sim.sh` simula a un maestro desde cualquier PC Windows, y `simulador/terminal/sim.sh` simula varios terminales.
+- `simulador/`: fork de las otras dos carpetas, adaptado para ser ejecutado en Python. Con `cd simulador/maestro/ && ./sim.sh` se simula a un maestro desde cualquier PC Windows. Con `cd simulador/terminal/ && ./sim.sh` se simulan varios terminales.
 
 Este repositorio se encarga del:
 
