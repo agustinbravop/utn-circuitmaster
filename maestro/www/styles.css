@@ -19,11 +19,12 @@ h1 {
 /* El dashboard completo con los nueve menus */
 #data-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
-  grid-gap: 20px;
-  width: 90%;
-  max-width: 1200px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, 440px);
+  grid-gap: 10px;
+  width: 95%;
+  max-width: 1500px;
+  margin: 0 auto 20px auto;
+  justify-content: center;
 }
 
 /* Cada menu asociado a un equipo */
@@ -32,7 +33,9 @@ h1 {
   border: 1px solid #ccc;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  padding: 15px;
+  width: 425px;
+  justify-self: center;
 }
 
 .terminal-box.disconnected {
@@ -49,7 +52,6 @@ h1 {
 /* La información del menu de cada equipo */
 .terminal-data {
   font-size: 14px;
-  color: #555;
 }
 
 details:not([open]) .terminal-data {
