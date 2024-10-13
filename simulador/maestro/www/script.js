@@ -175,24 +175,25 @@ const uiRompecircuitos = {
   } */
 function renderRompecircuitos(data) {
   const container = document.getElementById("Rompecircuitos");
+  const lockState = data.state || "BOOT_MODE";
 
   container.innerHTML = `<div
     style="display: flex; gap: 10px; justify-content: center; padding: 10px 0px;"
   >
     <div style="width: 45%;">
       <p style="margin: none; text-align: center;">Estado: <span style="color: ${
-        uiRompecircuitos[data.state][2]
-      };">${uiRompecircuitos[data.state][0]}</span></p>
+        uiRompecircuitos[lockState][2]
+      };">${uiRompecircuitos[lockState][0]}</span></p>
       <div style="display: flex; gap: 10px; justify-content: center;">
         <div style="font-size: 60px; margin: none;">
-          ${uiRompecircuitos[data.state][1]}
+          ${uiRompecircuitos[lockState][1]}
         </div>
         <svg
           style="width: 70px; height: 70px; margin-top: 10px;"
           id="Layer_1"
           data-name="Layer 1"
           xmlns="http://www.w3.org/2000/svg"
-          fill="${uiRompecircuitos[data.state][2]}"
+          fill="${uiRompecircuitos[lockState][2]}"
           viewBox="0 0 115.04 122.88"
         >
           <title>diode-led-light</title>
