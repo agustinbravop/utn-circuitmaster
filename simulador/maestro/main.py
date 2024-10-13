@@ -30,14 +30,16 @@ async def master_monitoring():
 
     ip_address, subnet_mask = None, None
     addresses = psutil.net_if_addrs()
-    if "Wi-Fi" in addresses:
-        for addr in addresses["Wi-Fi"]:
+    interface = "Wi-Fi"
+    if interface in addresses:
+        for addr in addresses[interface]:
             if addr.family == socket.AF_INET:
                 ip_address = addr.address
                 subnet_mask = addr.netmask
 
     if ip_address is None:
         print("Error al conectar a la red Wifi.")
+        print(f"Interfaz intendada: '{interface}'. Disponibles: {addresses}")
         return
 
     print(f"Conectado! IP: {ip_address}, Máscara de subred: {subnet_mask}")
