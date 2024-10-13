@@ -4,7 +4,7 @@ import asyncio
 import binascii
 import json
 import sys
-import netifaces as ni
+import psutil
 
 
 async def connect_to_wifi(ssid: str, password: str, max_retries=5):
@@ -131,12 +131,18 @@ async def monitoring(get_app_data):
 
     # terminal_ip, subnet_mask, _, _ = if_config
 
-    # Obtener interfaz por defecto (en Windows)
-    interface = ni.gateways()['default'][ni.AF_INET][1]
-    addr = ni.ifaddresses(interface)[ni.AF_INET][0]
+    terminal_ip, subnet_mask = None, None
+    addresses = psutil.net_if_addrs()
+    if "Wi-Fi" in addresses:
+        for addr in addresses["Wi-Fi"]:
+            if addr.family == socket.AF_INET:
+                ip_address = addr.address
+                subnet_mask = addr.netmask
 
-    terminal_ip = addr['addr']
-    subnet_mask = addr['netmask']
+    if ip_address is None:
+        print("Error al conectar a la red Wifi.")
+        return
+
     print(f"Conectado! IP: {terminal_ip}, Máscara de subred: {subnet_mask}")
 
     print("Esperando mensajes de descubrimiento del maestro...")

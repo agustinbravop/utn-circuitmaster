@@ -4,8 +4,8 @@ from wlan import connect_to_wifi
 from terminals import poll_terminal_data
 import asyncio
 import sys
-import netifaces as ni
-
+import psutil
+import socket
 
 # Datos para conectarse a la red WiFi
 # WLAN_SSID = sys.argv[1]
@@ -27,11 +27,19 @@ async def master_monitoring():
     #     return None
 
     # ip_address, subnet_mask, _, _ = if_config
-    interface = ni.gateways()['default'][ni.AF_INET][1]
-    addr = ni.ifaddresses(interface)[ni.AF_INET][0]
 
-    ip_address = addr['addr']
-    subnet_mask = addr['netmask']
+    ip_address, subnet_mask = None, None
+    addresses = psutil.net_if_addrs()
+    if "Wi-Fi" in addresses:
+        for addr in addresses["Wi-Fi"]:
+            if addr.family == socket.AF_INET:
+                ip_address = addr.address
+                subnet_mask = addr.netmask
+
+    if ip_address is None:
+        print("Error al conectar a la red Wifi.")
+        return
+
     print(f"Conectado! IP: {ip_address}, Máscara de subred: {subnet_mask}")
 
     broadcast_ip = calculate_broadcast(ip_address, subnet_mask)
