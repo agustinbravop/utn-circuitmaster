@@ -122,7 +122,8 @@ const uiRompecircuitos = {
   } */
 function renderRompecircuitos(data) {
   const container = document.getElementById("Rompecircuitos");
-  const lockState = data.state || "BOOT_MODE";
+  const lockState = data.state 
+  ?? "BOOT_MODE";
 
   container.innerHTML = `<div
     style="display: flex; gap: 10px; justify-content: center; padding: 10px 0px;"
@@ -169,7 +170,7 @@ function renderRompecircuitos(data) {
             Intentos restantes
           </td>
           <td style="border: 1px solid black; padding: 7px;">
-            ${data.remaining_attempts || "-"}
+            ${data.remaining_attempts ?? "-"}
           </td>
         </tr>
         <tr>
