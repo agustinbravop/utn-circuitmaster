@@ -86,7 +86,11 @@ function renderTeoriaDelDescontrol(data) {
 function renderClubTA(data) {
   const container = document.getElementById("ClubTA");
   // Personalizar por el equipo correspondiente
-  container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+  container.innerHTML = `
+    <div class="flex flex-col mt-2 bg-white p-4 rounded-lg">
+        <p>Promedio de Volumen en dB: ${data.current_color_name}</p>
+      </div>
+  `;
 }
 
 function renderTeamISI(data) {
