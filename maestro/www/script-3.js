@@ -1,9 +1,3 @@
-export function renderMonteCarlo(data) {
-  const container = document.getElementById("MonteCarlo");
-  // Personalizar por el equipo correspondiente
-  container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-}
-
 const uiRompecircuitos = {
   DISABLED: ["DESHABILITADO", "🪫", "black"],
   BOOT_MODE: ["INICIALIZACIÓN", "🔑", "grey"],

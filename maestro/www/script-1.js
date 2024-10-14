@@ -4,10 +4,12 @@ import {
   renderLosOgata,
 } from "./script-2.js";
 import {
-  renderMonteCarlo,
   renderLosFachas,
   renderRompecircuitos,
 } from "./script-3.js";
+import {
+  renderMonteCarlo,
+} from "./script-4.js";
 
 /** Petición HTTP de la data al maestro. */
 async function fetchData() {
