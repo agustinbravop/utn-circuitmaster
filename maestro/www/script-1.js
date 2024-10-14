@@ -88,7 +88,7 @@ function renderClubTA(data) {
   // Personalizar por el equipo correspondiente
   container.innerHTML = `
     <div class="flex flex-col mt-2 bg-white p-4 rounded-lg">
-        <p>Promedio de Volumen en dB: ${data.current_color_name}</p>
+        <p>El color actual es: ${data.current_color_name}</p>
       </div>
   `;
 }
