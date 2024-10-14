@@ -64,6 +64,12 @@ export function renderBrogramadores(data) {
 export function renderLosOgata(data) {
   const container = document.getElementById("LosOgata");
   // Personalizar por el equipo correspondiente
-  container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+  container.innerHTML = `
+  <div class="flex flex-col bg-white p-4 rounded-lg">
+    <p>Promedio: ${data.promedio_ruido}</p>
+    <p>Volumen: ${data.volumen_actual}</p>
+    <p>Entro alguien:${data.entro_alguien}</p>
+  </div>
+`;
 }
 
