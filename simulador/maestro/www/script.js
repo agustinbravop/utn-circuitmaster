@@ -43,9 +43,8 @@ function renderData(data) {
   if (data.TeamISI) {
     renderTeamISI(data.TeamISI);
   }
-  console.log(data.Colapintos)
+  console.log(data);
   if (data.Colapintos) {
-
     renderColapintos(data.Colapintos);
   }
   if (data.Brogramadores) {
@@ -93,7 +92,7 @@ function renderColapintos(data) {
     margin-top: 15px;
     font-family: Arial, sans-serif;
   `;
-  
+
   const tdStyle = `
     border: 1px solid #dddddd;
     text-align: center;
@@ -101,7 +100,7 @@ function renderColapintos(data) {
     background-color: #f9f9f9;
     color: #333;
   `;
-  
+
   const thStyle = `
     border: 1px solid #dddddd;
     padding: 10px;
@@ -175,8 +174,7 @@ const uiRompecircuitos = {
   } */
 function renderRompecircuitos(data) {
   const container = document.getElementById("Rompecircuitos");
-  const lockState = data.state 
-  ?? "BOOT_MODE";
+  const lockState = data.state ?? "BOOT_MODE";
 
   container.innerHTML = `<div
     style="display: flex; gap: 10px; justify-content: center; padding: 10px 0px;"
@@ -241,8 +239,27 @@ function renderRompecircuitos(data) {
 
 function renderLosFachas(data) {
   const container = document.getElementById("LosFachas");
+  const temp = data.temp;
+  const hum = data.hum;
+  let tempCol = "lime";
+  let humCol = "lime";
+  if (temp > 25) tempCol = "red";
+  if (temp <= 18) tempCol = "cyan";
+
+  // Set color based on humidity (optional, you can expand this part)
+  if (hum > 75) humCol = "red";
+  if (hum <= 60) humCol = "cyan";
   // Personalizar por el equipo correspondiente
-  container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+  container.innerHTML = `
+        <div style="color: black; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+            <h1>Monitoreo de Temperatura y Humedad</h1>
+            <div style="font-size: 24px; margin-bottom: 20px; padding: 8px; background-color: ${tempCol}; border: 1px solid black; border-radius: 12px;">
+                Temperatura: <span id="temperature">${temp}</span> °C
+            </div>
+            <div style="font-size: 24px; margin-bottom: 20px; padding: 8px; background-color: ${humCol}; border: 1px solid black; border-radius: 12px;">
+                Humedad: <span id="humidity">${hum}</span> %
+            </div>
+        </div>`;
 }
 
 const FETCH_INTERVAL_MS = 200;
