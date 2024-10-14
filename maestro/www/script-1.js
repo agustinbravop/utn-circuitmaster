@@ -42,6 +42,7 @@ function renderData(data) {
       const container = document.getElementById(t);
       if (data.terminales_conectados.includes(t)) {
         container.parentElement.classList.remove("disconnected");
+        container.parentElement.classList.add("connected");
       } else {
         container.parentElement.classList.add("disconnected");
       }
