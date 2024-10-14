@@ -5,47 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard de Terminales</title>
     <link rel="stylesheet" href="styles.css" />
-    <script defer src="script.js"></script>
+    <script defer type="module" src="script.js"></script>
+    <script defer type="module" src="script-brogramadores.js"></script>
+    <script defer type="module" src="script-clubta.js"></script>
+    <script defer type="module" src="script-colapintos.js"></script>
+    <script defer type="module" src="script-losfachas.js"></script>
+    <script defer type="module" src="script-losogata.js"></script>
+    <script defer type="module" src="script-montecarlo.js"></script>
+    <script defer type="module" src="script-rompecircuitos.js"></script>
+    <script defer type="module" src="script-teamisi.js"></script>
+    <script defer type="module" src="script-teoriadeldescontrol.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
-    <h1>Dashboard de Terminales</h1>
-    <div id="data-container">
-      <details class="terminal-box" open>
-        <summary class="terminal-title">TeoriaDelDescontrol</summary>
-        <div class="terminal-data" id="TeoriaDelDescontrol">Cargando...</div>
-      </details>
-      <details class="terminal-box" open>
-        <summary class="terminal-title">ClubTA</summary>
-        <div class="terminal-data" id="ClubTA">Cargando...</div>
-      </details>
-      <details class="terminal-box" open>
-        <summary class="terminal-title">TeamISI</summary>
-        <div class="terminal-data" id="TeamISI">Cargando...</div>
-      </details>
-      <details class="terminal-box" open>
-        <summary class="terminal-title">Colapintos</summary>
-        <div class="terminal-data" id="Colapintos">Cargando...</div>
-      </details>
-      <details class="terminal-box" open>
-        <summary class="terminal-title">Brogramadores</summary>
-        <div class="terminal-data" id="Brogramadores">Cargando...</div>
-      </details>
-      <details class="terminal-box" open>
-        <summary class="terminal-title">LosOgata</summary>
-        <div class="terminal-data" id="LosOgata">Cargando...</div>
-      </details>
-      <details class="terminal-box" open>
-        <summary class="terminal-title">MonteCarlo</summary>
-        <div class="terminal-data" id="MonteCarlo">Cargando...</div>
-      </details>
-      <details class="terminal-box" open>
-        <summary class="terminal-title">Rompecircuitos</summary>
-        <div class="terminal-data" id="Rompecircuitos">Cargando...</div>
-      </details>
-      <details class="terminal-box" open>
-        <summary class="terminal-title">LosFachas</summary>
-        <div class="terminal-data" id="LosFachas">Cargando...</div>
-      </details>
+    <div class="max-w-max mx-auto">
+      <h1 class="text-3xl font-semibold my-8">Dashboard de Terminales</h1>
+    </div>
+    <div id="data-container" class="container mx-auto px-4">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <details class="terminal-box bg-gray-100 p-4 rounded-lg shadow" open>
+          <summary class="terminal-title">TeoriaDelDescontrol</summary>
+          <div class="terminal-data" id="TeoriaDelDescontrol">Cargando...</div>
+        </details>
+        <details
+          class="terminal-box self-center bg-gray-100 p-4 rounded-lg shadow"
+          open
+        >
+          <summary class="terminal-title">ClubTA</summary>
+          <div class="terminal-data" id="ClubTA">Cargando...</div>
+        </details>
+        <details
+          class="terminal-box self-center bg-gray-100 p-4 rounded-lg shadow"
+          open
+        >
+          <summary class="terminal-title">TeamISI</summary>
+          <div class="terminal-data" id="TeamISI">Cargando...</div>
+        </details>
+        <details
+          class="terminal-box self-center bg-gray-100 p-4 rounded-lg shadow"
+          open
+        >
+          <summary class="terminal-title">Colapintos</summary>
+          <div class="terminal-data" id="Colapintos">Cargando...</div>
+        </details>
+        <details
+          class="terminal-box self-center bg-gray-100 p-4 rounded-lg shadow"
+          open
+        >
+          <summary class="terminal-title">Brogramadores</summary>
+          <div class="terminal-data" id="Brogramadores">Cargando...</div>
+        </details>
+        <details
+          class="terminal-box self-center bg-gray-100 p-4 rounded-lg shadow"
+          open
+        >
+          <summary class="terminal-title">LosOgata</summary>
+          <div class="terminal-data" id="LosOgata">Cargando...</div>
+        </details>
+        <details
+          class="terminal-box self-center bg-gray-100 p-4 rounded-lg shadow"
+          open
+        >
+          <summary class="terminal-title">MonteCarlo</summary>
+          <div class="terminal-data" id="MonteCarlo">Cargando...</div>
+        </details>
+        <details
+          class="terminal-box self-center bg-gray-100 p-4 rounded-lg shadow"
+          open
+        >
+          <summary class="terminal-title">Rompecircuitos</summary>
+          <div class="terminal-data" id="Rompecircuitos">Cargando...</div>
+        </details>
+        <details
+          class="terminal-box self-center bg-gray-100 p-4 rounded-lg shadow"
+          open
+        >
+          <summary class="terminal-title">LosFachas</summary>
+          <div class="terminal-data" id="LosFachas">Cargando...</div>
+        </details>
+      </div>
+    </div>
+    <div class="flex justify-center items-center space-x-6 my-10">
+      <div class="flex flex-col items-center">
+        <h3 class="text-lg text-green-500">Conectado</h3>
+        <hr class="w-48 h-1 bg-green-600 border-0 rounded md:my-2" />
+      </div>
+      <div class="flex flex-col items-center">
+        <h3 class="text-lg text-red-700">Desconectado</h3>
+        <hr class="w-48 h-1 bg-red-500 border-0 rounded md:my-2" />
+      </div>
     </div>
   </body>
 </html>

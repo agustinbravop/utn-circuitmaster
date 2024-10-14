@@ -1,15 +1,12 @@
-import {
-  renderBrogramadores,
-  renderColapintos,
-  renderLosOgata,
-} from "./script-2.js";
-import {
-  renderLosFachas,
-  renderRompecircuitos,
-} from "./script-3.js";
-import {
-  renderMonteCarlo,
-} from "./script-4.js";
+import { renderColapintos } from "./script-colapintos.js";
+import { renderBrogramadores } from "./script-brogramadores.js";
+import { renderLosFachas } from "./script-losfachas.js";
+import { renderClubTA } from "./script-clubta.js";
+import { renderLosOgata } from "./script-losogata.js";
+import { renderMonteCarlo } from "./script-montecarlo.js";
+import { renderTeoriaDelDescontrol } from "./script-teoriadeldescontrol.js";
+import { renderRompecircuitos } from "./script-rompecircuitos.js";
+import { renderTeamISI } from "./script-teamisi.js";
 
 /** Petición HTTP de la data al maestro. */
 async function fetchData() {
@@ -75,28 +72,6 @@ function renderData(data) {
   if (data.LosFachas) {
     renderLosFachas(data.LosFachas);
   }
-}
-
-function renderTeoriaDelDescontrol(data) {
-  const container = document.getElementById("TeoriaDelDescontrol");
-  // Personalizar por el equipo correspondiente
-  container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-}
-
-function renderClubTA(data) {
-  const container = document.getElementById("ClubTA");
-  // Personalizar por el equipo correspondiente
-  container.innerHTML = `
-    <div class="flex flex-col mt-2 bg-white p-4 rounded-lg">
-        <p>El color actual es: ${data.color}</p>
-      </div>
-  `;
-}
-
-function renderTeamISI(data) {
-  const container = document.getElementById("TeamISI");
-  // Personalizar por el equipo correspondiente
-  container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
 }
 
 const FETCH_INTERVAL_MS = 500;
