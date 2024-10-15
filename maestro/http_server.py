@@ -42,7 +42,7 @@ def handle_http_request(client_socket):
 
     try:
         response = route_request(request)
-        client_socket.send(response)
+        client_socket.write(response)
     except OSError as e:
         print(f"Error en el servidor HTTP: {e}")
 
@@ -74,16 +74,15 @@ def serve_file(path: str, content_type: str):
     """Responder con los archivos HTML, CSS o JS del servidor."""
     try:
         with open(path, "r") as file:
-            content = file.read()
+            content = file.read().encode()
 
         response = "HTTP/1.1 200 OK\r\n" + \
             f"Content-Type: {content_type}\r\n" + \
-            f"Content-Length: {len(content.encode())}\r\n" + \
+            f"Content-Length: {len(content)}\r\n" + \
             "Connection: close\r\n" + \
-            "\r\n" + \
-            f"{content}"
+            "\r\n"
 
-        return response.encode()
+        return response.encode() + content
     except OSError:
         return "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".encode()
 
